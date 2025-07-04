@@ -55,7 +55,16 @@ export function useData() {
     { 일자: new Date('2024-12-03'), 종목명: 'KAU24', 시가: 12000, 거래량: 46000, 거래대금: 552000000, 연도: 2024, 월: 12, 연월: '2024-12', 추천: '관망' },
   ]);
 
+  // ESG 등급 추세 더미 데이터 추가
+  const [esgTrendData] = useState([
+    { year: 2020, grade: "A" },
+    { year: 2021, grade: "A+" },
+    { year: 2022, grade: "AA" },
+    { year: 2023, grade: "AA+" },
+    { year: 2024, grade: "AAA" },
+  ]);
+
   const [loading] = useState(false);
 
-  return { emissionsData, marketData, loading };
+  return { emissionsData, marketData, esgTrendData, loading };
 } 

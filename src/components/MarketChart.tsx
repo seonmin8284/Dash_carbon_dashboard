@@ -133,7 +133,19 @@ const MarketChart: React.FC<MarketChartProps> = ({ data }) => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">차트 로딩 중...</p>
+            <p className="text-gray-600">차트 준비 중입니다...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-gray-600">시장 데이터가 없습니다.</p>
           </div>
         </div>
       </div>

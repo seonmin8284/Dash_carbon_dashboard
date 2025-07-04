@@ -175,7 +175,15 @@ const GaugeCharts: React.FC<GaugeChartsProps> = ({
   }, [gaugeData, apexChartsLoaded]);
 
   if (!apexChartsLoaded) {
-    return <div>차트 로딩 중...</div>;
+    return <div>차트 준비 중입니다...</div>;
+  }
+
+  if (
+    !gaugeData ||
+    !gaugeData.탄소배출권_보유수량 ||
+    !gaugeData.현재_탄소배출량
+  ) {
+    return <div>게이지 데이터가 없습니다.</div>;
   }
 
   return (

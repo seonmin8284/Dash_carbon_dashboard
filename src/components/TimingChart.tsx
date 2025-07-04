@@ -125,7 +125,11 @@ const TimingChart: React.FC<TimingChartProps> = ({
   }, [dates, prices, volumes, recommendations, apexChartsLoaded]);
 
   if (!apexChartsLoaded) {
-    return <div>차트 로딩 중...</div>;
+    return <div>차트 준비 중입니다...</div>;
+  }
+
+  if (!dates || dates.length === 0 || !prices || prices.length === 0) {
+    return <div>매수 타이밍 데이터가 없습니다.</div>;
   }
 
   return <div ref={chartRef} />;

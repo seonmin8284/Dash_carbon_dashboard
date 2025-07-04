@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Trophy } from "lucide-react";
+import { useData } from "../hooks/useData";
 import QuickStats from "../components/QuickStats";
 import MainFeatures from "../components/MainFeatures";
 import ESGSettings from "../components/ESGSettings";
@@ -17,7 +18,21 @@ interface CompanyRanking {
 }
 
 const MainDashboard: React.FC = () => {
+  const { esgTrendData } = useData();
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
+
+  // ApexCharts 로딩 상태 관리 (최상위에서 한 번만)
+  useEffect(() => {
+    if (window.ApexCharts) {
+      setApexChartsLoaded(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src =
+      "https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js";
+    script.onload = () => setApexChartsLoaded(true);
+    document.head.appendChild(script);
+  }, []);
 
   // 사이드바 설정 상태
   const [companyName, setCompanyName] = useState("삼성전자");
@@ -86,26 +101,16 @@ const MainDashboard: React.FC = () => {
       .reduce((sum, r) => sum + r.reductionRate, 0) /
     Math.max(rankings.filter((r) => r.industry === industry).length, 1);
 
-  useEffect(() => {
-    // ApexCharts가 CDN에서 로드되었는지 확인
-    const checkApexCharts = () => {
-      if (window.ApexCharts) {
-        setApexChartsLoaded(true);
-      } else {
-        setTimeout(checkApexCharts, 100);
-      }
-    };
-    checkApexCharts();
-  }, []);
-
   // 차트 생성 함수들
   const createTrendChart = () => {
-    if (!apexChartsLoaded) return <div>차트 로딩 중...</div>;
+    if (!apexChartsLoaded) return <div>차트 준비 중입니다...</div>;
+    if (!esgTrendData || esgTrendData.length === 0)
+      return <div>ESG 등급 추세 데이터가 없습니다.</div>;
     return <div id="trend-chart" />;
   };
 
   const createKPIChart = () => {
-    if (!apexChartsLoaded) return <div>차트 로딩 중...</div>;
+    if (!apexChartsLoaded) return <div>차트 준비 중입니다...</div>;
     return <div id="kpi-chart" />;
   };
 

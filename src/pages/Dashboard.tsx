@@ -50,6 +50,19 @@ const Dashboard: React.FC = () => {
   const [chatInput, setChatInput] = useState("");
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
 
+  // ApexCharts 로딩 상태 관리 (최상위에서 한 번만)
+  useEffect(() => {
+    if (window.ApexCharts) {
+      setApexChartsLoaded(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src =
+      "https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js";
+    script.onload = () => setApexChartsLoaded(true);
+    document.head.appendChild(script);
+  }, []);
+
   // 게이지 데이터 생성
   const generateGaugeData = (year: number, month: number) => {
     // 입력값 검증
@@ -84,20 +97,6 @@ const Dashboard: React.FC = () => {
   const [gaugeData, setGaugeData] = useState(() =>
     generateGaugeData(selectedYear, selectedMonth)
   );
-
-  // ApexCharts 로딩 확인
-  useEffect(() => {
-    const checkApexCharts = () => {
-      if (window.ApexCharts) {
-        console.log("✅ ApexCharts 로드 완료");
-        setApexChartsLoaded(true);
-      } else {
-        console.log("⏳ ApexCharts 로딩 중...");
-        setTimeout(checkApexCharts, 100);
-      }
-    };
-    checkApexCharts();
-  }, []);
 
   // selectedYear나 selectedMonth가 변경될 때 게이지 데이터 업데이트
   useEffect(() => {
@@ -226,9 +225,16 @@ const Dashboard: React.FC = () => {
             </h2>
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
               <EmissionsChart
-                emissionsData={emissionsData}
-                selectedYear={selectedYear}
-                apexChartsLoaded={apexChartsLoaded}
+                data={emissionsData.map((d) => ({
+                  year: d.연도.toString(),
+                  total: d.총배출량,
+                  energy: d.에너지,
+                  transport: 0, // 수송 데이터가 없으므로 0으로 설정
+                  industry: d.산업공정,
+                  agriculture: d.농업,
+                  waste: d.폐기물,
+                }))}
+                selectedYear={selectedYear.toString()}
               />
             </div>
           </div>
@@ -241,9 +247,11 @@ const Dashboard: React.FC = () => {
             </h2>
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
               <MarketChart
-                marketData={marketData}
-                selectedYear={selectedYear}
-                apexChartsLoaded={apexChartsLoaded}
+                data={marketData.map((d) => ({
+                  date: d.연도.toString(),
+                  price: d.시가,
+                  volume: d.거래량,
+                }))}
               />
             </div>
           </div>

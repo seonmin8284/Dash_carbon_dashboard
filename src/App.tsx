@@ -26,18 +26,18 @@ const NotFound = () => (
 const App: React.FC = () => {
   return (
     <Router>
-      <Suspense fallback={<LoadingSpinner />}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<MainDashboard />} />
-            <Route path="chatbot" element={<Chatbot />} />
-            <Route path="strategy" element={<Strategy />} />
-            <Route path="info" element={<ProgramInfo />} />
-            <Route path="dashboard" element={<Dashboard />} />
+      <Layout>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<MainDashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/strategy" element={<Strategy />} />
+            <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/info" element={<ProgramInfo />} />
             <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </Suspense>
+          </Routes>
+        </Suspense>
+      </Layout>
     </Router>
   );
 };

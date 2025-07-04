@@ -86,7 +86,7 @@ const ROIChart: React.FC<ROIChartProps> = ({ apexChartsLoaded }) => {
   }, [apexChartsLoaded]);
 
   if (!apexChartsLoaded) {
-    return <div>차트 로딩 중...</div>;
+    return <div>차트 준비 중입니다...</div>;
   }
 
   return <div ref={chartRef} />;

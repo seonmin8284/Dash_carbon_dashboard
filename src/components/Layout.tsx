@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Home,
   BarChart3,
@@ -9,9 +9,11 @@ import {
   Globe,
 } from "lucide-react";
 
-const Layout: React.FC = () => {
-  const location = useLocation();
+interface LayoutProps {
+  children: React.ReactNode;
+}
 
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: "/", icon: Home, label: "메인 대시보드" },
     { path: "/dashboard", icon: BarChart3, label: "현황 대시보드" },
@@ -39,11 +41,7 @@ const Layout: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    location.pathname === item.path
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 >
                   <Icon className="h-5 w-5" />
                   <span className="font-medium">{item.label}</span>
@@ -79,11 +77,7 @@ const Layout: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex flex-col items-center py-2 px-3 text-xs ${
-                    location.pathname === item.path
-                      ? "text-blue-600"
-                      : "text-gray-500"
-                  }`}
+                  className="flex flex-col items-center py-2 px-3 text-xs text-gray-500"
                 >
                   <Icon className="h-5 w-5 mb-1" />
                   <span>{item.label}</span>
@@ -95,7 +89,7 @@ const Layout: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>
