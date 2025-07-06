@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { Trophy } from "lucide-react";
 import { useData } from "../hooks/useData";
 import QuickStats from "../components/QuickStats";
 import MainFeatures from "../components/MainFeatures";
 import ESGSettings from "../components/ESGSettings";
-import ESGRankingTable from "../components/ESGRankingTable";
+import ESGRankingCard from "../components/ESGRankingCard";
 import EmergencyAlerts from "../components/EmergencyAlerts";
+import { SidebarContext } from "../components/Layout";
 
 interface CompanyRanking {
   rank: number;
@@ -20,6 +21,8 @@ interface CompanyRanking {
 const MainDashboard: React.FC = () => {
   const { esgTrendData, esgMultiStandardData } = useData();
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
+  const { sidebarTab } = useContext(SidebarContext);
+  const isChatSidebarOpen = sidebarTab === "chat";
 
   // ApexCharts 로딩 상태 관리 (최상위에서 한 번만)
   useEffect(() => {
@@ -376,7 +379,11 @@ const MainDashboard: React.FC = () => {
           /> */}
 
           {/* ESG Ranking Board */}
-          <ESGRankingTable rankings={rankings} currentCompany={companyName} />
+          <ESGRankingCard
+            rankings={rankings}
+            currentCompany={companyName}
+            isChatSidebarOpen={isChatSidebarOpen}
+          />
 
           {/* KPI Comparison */}
           <div className="mb-6">
