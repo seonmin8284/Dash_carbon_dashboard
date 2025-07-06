@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Trophy } from "lucide-react";
 import { useData } from "../hooks/useData";
 import QuickStats from "../components/QuickStats";
@@ -233,20 +233,8 @@ const MainDashboard: React.FC = () => {
   const [currentReductionRate, setCurrentReductionRate] = useState(18.5);
   const [currentAllocationRatio, setCurrentAllocationRatio] = useState(112.3);
 
-  // 배지 생성 함수
-  const generateBadgeContent = () => {
-    const score = currentEsgScore;
-    if (score >= 90)
-      return { grade: "A+", medal: "🥇", color: "text-yellow-600" };
-    if (score >= 80) return { grade: "A", medal: "🥈", color: "text-gray-600" };
-    if (score >= 70)
-      return { grade: "B+", medal: "🥉", color: "text-amber-600" };
-    if (score >= 60) return { grade: "B", medal: "🏅", color: "text-blue-600" };
-    return { grade: "C", medal: "🎖️", color: "text-red-600" };
-  };
-
-  // 랭킹 데이터 생성
-  const generateRankingData = (): CompanyRanking[] => {
+  // 랭킹 데이터 생성 - useMemo로 최적화
+  const rankings = useMemo((): CompanyRanking[] => {
     const companies = [
       { name: "삼성전자", industry: "전자제품" },
       { name: "POSCO", industry: "철강" },
@@ -278,10 +266,21 @@ const MainDashboard: React.FC = () => {
       })
       .sort((a, b) => b.totalScore - a.totalScore)
       .map((item, index) => ({ ...item, rank: index + 1 }));
-  };
+  }, []);
 
-  const rankings = generateRankingData();
-  const { grade, medal, color } = generateBadgeContent();
+  // 배지 정보 계산 - useMemo로 최적화
+  const badgeInfo = useMemo(() => {
+    const score = currentEsgScore;
+    if (score >= 90)
+      return { grade: "A+", medal: "🥇", color: "text-yellow-600" };
+    if (score >= 80) return { grade: "A", medal: "🥈", color: "text-gray-600" };
+    if (score >= 70)
+      return { grade: "B+", medal: "🥉", color: "text-amber-600" };
+    if (score >= 60) return { grade: "B", medal: "🏅", color: "text-blue-600" };
+    return { grade: "C", medal: "🎖️", color: "text-red-600" };
+  }, [currentEsgScore]);
+
+  const { grade, medal, color } = badgeInfo;
 
   // 현재 순위 계산
   const currentRank = rankings.findIndex((r) => r.company === companyName) + 1;
@@ -379,16 +378,6 @@ const MainDashboard: React.FC = () => {
           {/* ESG Ranking Board */}
           <ESGRankingTable rankings={rankings} currentCompany={companyName} />
 
-          {/* Trend Chart */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
-              ESG 등급 추세 (4가지 기준)
-            </h4>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              {createTrendChart()}
-            </div>
-          </div>
-
           {/* KPI Comparison */}
           <div className="mb-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
@@ -440,6 +429,16 @@ const MainDashboard: React.FC = () => {
           <div className="mb-6">
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               {createKPIChart()}
+            </div>
+          </div>
+
+          {/* Trend Chart */}
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
+              ESG 등급 추세 (4가지 기준)
+            </h4>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              {createTrendChart()}
             </div>
           </div>
 

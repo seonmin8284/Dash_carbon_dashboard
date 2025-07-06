@@ -8,6 +8,7 @@ interface ChatInterfaceProps {
   chatInput: string;
   setChatInput: (input: string) => void;
   onChatSubmit: (e: React.FormEvent) => void;
+  onClose?: () => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -16,6 +17,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   chatInput,
   setChatInput,
   onChatSubmit,
+  onClose,
 }) => {
   const analyzeScenario = (input: string): string => {
     const lowerInput = input.toLowerCase();
@@ -78,13 +80,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <div className="bg-white h-full flex flex-col w-full">
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
-        <h3 className="text-lg font-semibold flex items-center">
-          <MessageCircle className="h-5 w-5 mr-2" />
-          AI 챗봇 상담
-        </h3>
-        <p className="text-sm text-blue-100 mt-1">
-          탄소배출권 관련 질문을 해주세요
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center">
+              <MessageCircle className="h-5 w-5 mr-2" />
+              AI 챗봇 상담
+            </h3>
+            <p className="text-sm text-blue-100 mt-1">
+              탄소배출권 관련 질문을 해주세요
+            </p>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-blue-700 transition-colors"
+              title="닫기"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="h-[calc(100vh-200px)] overflow-y-auto overflow-x-hidden p-4 space-y-4">

@@ -8,10 +8,8 @@ import {
   Info,
   Globe,
   FileText,
-  Bell,
 } from "lucide-react";
 import ChatInterface from "./ChatInterface";
-import EmergencyAlerts from "./EmergencyAlerts";
 import { ChatMessage } from "../types";
 
 interface LayoutProps {
@@ -22,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [sidebarTab, setSidebarTab] = useState<"chat" | "alert" | null>("chat");
+  const [sidebarTab, setSidebarTab] = useState<"chat" | null>("chat");
 
   const navItems = [
     { path: "/", icon: Home, label: "메인 대시보드" },
@@ -37,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const showSidebar = location.pathname !== "/report";
 
   // 탭 버튼 클릭 핸들러
-  const handleSidebarTab = (tab: "chat" | "alert") => {
+  const handleSidebarTab = (tab: "chat") => {
     setSidebarTab((prev) => (prev === tab ? null : tab));
   };
 
@@ -72,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {/* Header */}
         <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg md:hidden">
           <div className="container mx-auto px-4 py-4">
@@ -109,8 +107,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Main Content */}
         <main
           className={`${
-            showSidebar && sidebarTab ? "mr-96" : ""
-          } flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6`}
+            showSidebar && sidebarTab ? "w-[calc(100%-384px)]" : "w-full"
+          } px-4 py-6 pb-20 md:pb-6 transition-all duration-300`}
         >
           {children}
         </main>
@@ -120,129 +118,97 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <>
             {/* Desktop Sidebar */}
             {sidebarTab && (
-              <aside className="hidden lg:flex w-96 bg-white shadow-lg fixed right-0 top-0 h-full z-50">
-                {/* 탭 내용 */}
-                <div className="flex-1 h-full overflow-y-auto overflow-x-hidden">
-                  {sidebarTab === "chat" && (
-                    <div className="p-4 w-full">
-                      <ChatInterface
-                        chatMessages={chatMessages}
-                        setChatMessages={setChatMessages}
-                        chatInput={chatInput}
-                        setChatInput={setChatInput}
-                        onChatSubmit={(e) => {
-                          e.preventDefault();
-                          if (!chatInput.trim()) return;
+              <aside className="hidden lg:flex w-96 bg-white shadow-lg absolute right-0 top-0 h-full z-50">
+                {/* 챗봇 내용 */}
+                <div className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
+                  <div className="p-4 w-full">
+                    <ChatInterface
+                      chatMessages={chatMessages}
+                      setChatMessages={setChatMessages}
+                      chatInput={chatInput}
+                      setChatInput={setChatInput}
+                      onChatSubmit={(e) => {
+                        e.preventDefault();
+                        if (!chatInput.trim()) return;
 
-                          const userMessage: ChatMessage = {
-                            role: "user",
-                            content: chatInput,
-                            timestamp: new Date().toISOString(),
-                          };
+                        const userMessage: ChatMessage = {
+                          role: "user",
+                          content: chatInput,
+                          timestamp: new Date().toISOString(),
+                        };
 
-                          // AI 응답 생성
-                          const analyzeScenario = (input: string): string => {
-                            const lowerInput = input.toLowerCase();
+                        // AI 응답 생성
+                        const analyzeScenario = (input: string): string => {
+                          const lowerInput = input.toLowerCase();
 
-                            if (
-                              lowerInput.includes("탄소배출량") ||
-                              lowerInput.includes("배출량")
-                            ) {
-                              return "현재 탄소배출량은 676,648 Gg CO₂eq (2021년 기준)입니다. 연도별로 감소 추세를 보이고 있으며, 2030년까지 40% 감축 목표를 달성하기 위해 지속적인 노력이 필요합니다.";
-                            }
+                          if (
+                            lowerInput.includes("탄소배출량") ||
+                            lowerInput.includes("배출량")
+                          ) {
+                            return "현재 탄소배출량은 676,648 Gg CO₂eq (2021년 기준)입니다. 연도별로 감소 추세를 보이고 있으며, 2030년까지 40% 감축 목표를 달성하기 위해 지속적인 노력이 필요합니다.";
+                          }
 
-                            if (
-                              lowerInput.includes("가격") ||
-                              lowerInput.includes("kau")
-                            ) {
-                              return "KAU24 현재 가격은 8,770원으로, 전년 대비 2.3% 상승했습니다. 시장 전망은 긍정적이며, 정부의 탄소중립 정책 강화로 인해 가격 상승이 예상됩니다.";
-                            }
+                          if (
+                            lowerInput.includes("가격") ||
+                            lowerInput.includes("kau")
+                          ) {
+                            return "KAU24 현재 가격은 8,770원으로, 전년 대비 2.3% 상승했습니다. 시장 전망은 긍정적이며, 정부의 탄소중립 정책 강화로 인해 가격 상승이 예상됩니다.";
+                          }
 
-                            if (
-                              lowerInput.includes("전략") ||
-                              lowerInput.includes("구매")
-                            ) {
-                              return "탄소배출권 구매 전략으로는 1) 정기적 분할 매수, 2) 가격 하락 시 대량 매수, 3) 헤징을 위한 ETF 투자 등을 고려해볼 수 있습니다. 현재 시장 상황에서는 점진적 매수가 권장됩니다.";
-                            }
+                          if (
+                            lowerInput.includes("전략") ||
+                            lowerInput.includes("구매")
+                          ) {
+                            return "탄소배출권 구매 전략으로는 1) 정기적 분할 매수, 2) 가격 하락 시 대량 매수, 3) 헤징을 위한 ETF 투자 등을 고려해볼 수 있습니다. 현재 시장 상황에서는 점진적 매수가 권장됩니다.";
+                          }
 
-                            if (
-                              lowerInput.includes("감축") ||
-                              lowerInput.includes("목표")
-                            ) {
-                              return "2030년까지 40% 감축 목표를 달성하기 위해서는 에너지 효율 개선, 재생에너지 전환, 공급망 최적화 등이 필요합니다. 현재 감축률은 18.5%로 목표 달성을 위해 추가 노력이 요구됩니다.";
-                            }
+                          if (
+                            lowerInput.includes("감축") ||
+                            lowerInput.includes("목표")
+                          ) {
+                            return "2030년까지 40% 감축 목표를 달성하기 위해서는 에너지 효율 개선, 재생에너지 전환, 공급망 최적화 등이 필요합니다. 현재 감축률은 18.5%로 목표 달성을 위해 추가 노력이 요구됩니다.";
+                          }
 
-                            if (
-                              lowerInput.includes("기업") ||
-                              lowerInput.includes("할당량")
-                            ) {
-                              return "주요 기업별 탄소배출권 할당량은 포스코(2,450만톤), 현대차(1,230만톤), 삼성전자(890만톤) 순입니다. 기업들은 할당량을 초과하지 않도록 감축 노력을 지속하고 있습니다.";
-                            }
+                          if (
+                            lowerInput.includes("기업") ||
+                            lowerInput.includes("할당량")
+                          ) {
+                            return "주요 기업별 탄소배출권 할당량은 포스코(2,450만톤), 현대차(1,230만톤), 삼성전자(890만톤) 순입니다. 기업들은 할당량을 초과하지 않도록 감축 노력을 지속하고 있습니다.";
+                          }
 
-                            if (
-                              lowerInput.includes("시장") ||
-                              lowerInput.includes("거래")
-                            ) {
-                              return "탄소배출권 거래시장은 2021년부터 본격 운영되었으며, 현재 1,200여개 기업이 참여하고 있습니다. 거래량은 지속적으로 증가하고 있으며, 시장 유동성이 개선되고 있습니다.";
-                            }
+                          if (
+                            lowerInput.includes("시장") ||
+                            lowerInput.includes("거래")
+                          ) {
+                            return "탄소배출권 거래시장은 2021년부터 본격 운영되었으며, 현재 1,200여개 기업이 참여하고 있습니다. 거래량은 지속적으로 증가하고 있으며, 시장 유동성이 개선되고 있습니다.";
+                          }
 
-                            if (
-                              lowerInput.includes("정책") ||
-                              lowerInput.includes("법")
-                            ) {
-                              return "탄소중립기본법과 온실가스 배출권의 할당 및 거래에 관한 법률에 따라 탄소배출권 제도가 운영되고 있습니다. 2030년까지 40% 감축 목표를 달성하기 위한 다양한 정책이 시행되고 있습니다.";
-                            }
+                          if (
+                            lowerInput.includes("정책") ||
+                            lowerInput.includes("법")
+                          ) {
+                            return "탄소중립기본법과 온실가스 배출권의 할당 및 거래에 관한 법률에 따라 탄소배출권 제도가 운영되고 있습니다. 2030년까지 40% 감축 목표를 달성하기 위한 다양한 정책이 시행되고 있습니다.";
+                          }
 
-                            return "탄소배출권과 관련된 질문을 해주세요. 배출량, 가격, 구매 전략, 감축 목표, 기업 할당량, 시장 현황, 정책 등에 대해 답변드릴 수 있습니다.";
-                          };
+                          return "탄소배출권과 관련된 질문을 해주세요. 배출량, 가격, 구매 전략, 감축 목표, 기업 할당량, 시장 현황, 정책 등에 대해 답변드릴 수 있습니다.";
+                        };
 
-                          const assistantMessage: ChatMessage = {
-                            role: "assistant",
-                            content: analyzeScenario(chatInput),
-                            timestamp: new Date().toISOString(),
-                          };
+                        const assistantMessage: ChatMessage = {
+                          role: "assistant",
+                          content: analyzeScenario(chatInput),
+                          timestamp: new Date().toISOString(),
+                        };
 
-                          setChatMessages([
-                            ...chatMessages,
-                            userMessage,
-                            assistantMessage,
-                          ]);
-                          setChatInput("");
-                        }}
-                      />
-                    </div>
-                  )}
-                  {sidebarTab === "alert" && (
-                    <div className="p-4 w-full">
-                      <EmergencyAlerts />
-                    </div>
-                  )}
-                </div>
-
-                {/* 세로 탭 버튼 - 우측에 배치 */}
-                <div className="flex flex-col border-l border-gray-200 py-4 px-2 bg-gray-50">
-                  <button
-                    className={`mb-2 p-2 rounded-lg flex items-center justify-center transition-colors ${
-                      sidebarTab === "chat"
-                        ? "bg-blue-100 text-blue-700 font-bold"
-                        : "text-gray-500 hover:bg-gray-100"
-                    }`}
-                    onClick={() => handleSidebarTab("chat")}
-                    title="챗봇"
-                  >
-                    <MessageCircle className="h-6 w-6" />
-                  </button>
-                  <button
-                    className={`p-2 rounded-lg flex items-center justify-center transition-colors ${
-                      sidebarTab === "alert"
-                        ? "bg-orange-100 text-orange-700 font-bold"
-                        : "text-gray-500 hover:bg-gray-100"
-                    }`}
-                    onClick={() => handleSidebarTab("alert")}
-                    title="알림"
-                  >
-                    <Bell className="h-6 w-6" />
-                  </button>
+                        setChatMessages([
+                          ...chatMessages,
+                          userMessage,
+                          assistantMessage,
+                        ]);
+                        setChatInput("");
+                      }}
+                      onClose={() => setSidebarTab(null)}
+                    />
+                  </div>
                 </div>
               </aside>
             )}
@@ -253,6 +219,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <button
                   onClick={() => setSidebarTab("chat")}
                   className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+                  title="챗봇 열기"
                 >
                   <MessageCircle className="h-6 w-6" />
                 </button>
