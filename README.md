@@ -9,6 +9,7 @@
 
 ### ✨ 주요 개선사항
 
+- **📄 AI 리포트 생성기 추가**: PDF 문서 분석 및 새로운 주제의 보고서 자동 생성
 - **🤖 AI 챗봇 완전 리뉴얼**: 질문 의도 분석 및 자동 시각화 생성
 - **📊 정확한 데이터 표시**: 국가 온실가스 인벤토리 데이터 정확성 개선
 - **🎨 동적 시각화**: 질문 타입에 따른 최적 차트 자동 선택
@@ -25,6 +26,7 @@
 - **💹 시장 데이터**: KAU24 시가 및 거래량 추이 분석
 - **🏭 기업별 현황**: 주요 기업별 탄소배출권 할당량 분석
 - **🤖 AI 챗봇**: 탄소 데이터 분석을 위한 대화형 AI 어시스턴트 (완전 리뉴얼)
+- **📄 AI 리포트 생성기**: PDF 문서 분석 및 새로운 주제의 보고서 자동 생성
 - **🖥️ 웹뷰 통합**: 메인 대시보드 우측 패널에 챗봇 임베드
 
 ## 🏗️ 프로젝트 구조
@@ -34,6 +36,7 @@ Dash_carbon_dashboard/
 ├── main.py                       # 🎯 Streamlit 메인 대시보드 (웹뷰 통합)
 ├── run_dashboard.bat             # 🚀 Windows용 실행 스크립트
 ├── run_dashboard.ps1             # 🚀 PowerShell용 실행 스크립트
+├── run_api_server.py             # 🚀 AI 리포트 생성기 API 서버 실행 스크립트
 ├── agent/
 │   ├── enhanced_carbon_rag_agent.py  # 🚀 향상된 RAG 에이전트 (메인 시스템)
 │   ├── data_preprocessor.py      # 📊 데이터 전처리 및 통합
@@ -47,6 +50,8 @@ Dash_carbon_dashboard/
 │   ├── 2_구매_전략.py             # 💹 구매 전략 페이지
 │   ├── 4_프로그램_정보.py          # ℹ️ 프로그램 정보 페이지
 │   └── 5_AI_챗봇.py              # 🤖 AI 챗봇 페이지 (iframe용 최적화)
+├── api/
+│   └── report_generator.py        # 📄 AI 리포트 생성기 백엔드 API
 ├── data/                         # 📁 탄소 배출 데이터 파일들
 │   ├── 국가 온실가스 인벤토리(1990_2021).csv  # 주요 데이터
 │   ├── 01. 3차_사전할당_20250613090824.csv
@@ -80,7 +85,29 @@ Dash_carbon_dashboard/
 
 ## 🚀 실행 방법
 
-### 방법 1: 웹뷰 통합 실행 (권장)
+### 방법 1: AI 리포트 생성기 포함 전체 시스템 실행 (권장)
+
+#### 1단계: 백엔드 API 서버 실행
+
+```bash
+# AI 리포트 생성기 API 서버 실행 (포트 5001)
+python run_api_server.py
+```
+
+#### 2단계: 프론트엔드 실행
+
+```bash
+# React 프론트엔드 실행 (포트 5173)
+npm run dev
+```
+
+#### 3단계: 브라우저에서 접속
+
+- **메인 대시보드**: http://localhost:5173
+- **AI 리포트 생성기**: http://localhost:5173/report
+- **API 서버**: http://localhost:5001
+
+### 방법 2: 기존 Streamlit 방식 실행
 
 #### Windows 사용자
 
@@ -145,11 +172,14 @@ pip install -r requirements.txt
 
 ### 4단계: 환경 변수 설정
 
-`.env` 파일에 Upstage API 키를 설정하세요:
+`.env` 파일에 필요한 API 키들을 설정하세요:
 
 ```bash
 # .env 파일 생성 및 편집
 UPSTAGE_API_KEY=your_upstage_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+PINECONE_API_KEY=your_pinecone_api_key_here
+PINECONE_ENV=your_pinecone_environment_here
 ```
 
 ### 5단계: 대시보드 실행
@@ -171,6 +201,31 @@ Network URL: http://192.168.x.x:8501
 ```
 
 브라우저에서 **http://localhost:8501**로 접속하세요.
+
+## 📄 AI 리포트 생성기 사용법
+
+### ✨ 주요 기능
+
+- **📎 PDF 문서 업로드**: 참고할 보고서 형식의 PDF 파일 업로드
+- **🧠 AI 문서 분석**: 목차 자동 추출 및 문서 구조 분석
+- **📝 새로운 주제 입력**: 생성할 보고서의 주제 입력
+- **🤖 AI 보고서 생성**: 참고 문서의 형식을 학습하여 새로운 주제의 보고서 생성
+- **📥 Word 문서 다운로드**: 생성된 보고서를 .docx 형식으로 다운로드
+
+### 🔄 사용 단계
+
+1. **문서 업로드**: 참고할 PDF 문서를 업로드합니다
+2. **문서 분석**: AI가 문서의 목차와 구조를 자동으로 분석합니다
+3. **주제 입력**: 새로 작성할 보고서의 주제를 입력합니다
+4. **보고서 생성**: AI가 참고 문서의 형식을 학습하여 새로운 주제의 보고서를 생성합니다
+5. **다운로드**: 생성된 보고서를 Word 문서로 다운로드합니다
+
+### 🛠️ 기술 스택
+
+- **백엔드**: Flask, OpenAI API, Pinecone 벡터 스토어
+- **프론트엔드**: React, TypeScript, Tailwind CSS
+- **PDF 처리**: pdfplumber
+- **문서 생성**: python-docx
 
 ## 🖥️ 웹뷰 통합 기능
 

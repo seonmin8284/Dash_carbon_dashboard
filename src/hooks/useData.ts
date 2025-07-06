@@ -64,7 +64,46 @@ export function useData() {
     { year: 2024, grade: "AAA" },
   ]);
 
+  // 4가지 ESG 기준별 추세 데이터
+  const [esgMultiStandardData] = useState([
+    {
+      year: 2020,
+      gri: { grade: "C", score: 65.2 },
+      sasb: { grade: "B", score: 72.1 },
+      djsi: { grade: "C+", score: 68.5 },
+      kEsg: { grade: "D", score: 58.3 }
+    },
+    {
+      year: 2021,
+      gri: { grade: "C+", score: 68.7 },
+      sasb: { grade: "B+", score: 75.3 },
+      djsi: { grade: "B", score: 71.2 },
+      kEsg: { grade: "C", score: 62.1 }
+    },
+    {
+      year: 2022,
+      gri: { grade: "B", score: 72.1 },
+      sasb: { grade: "A", score: 81.4 },
+      djsi: { grade: "B+", score: 78.0 },
+      kEsg: { grade: "C", score: 63.3 }
+    },
+    {
+      year: 2023,
+      gri: { grade: "B+", score: 75.8 },
+      sasb: { grade: "A+", score: 88.2 },
+      djsi: { grade: "A", score: 82.5 },
+      kEsg: { grade: "C+", score: 67.9 }
+    },
+    {
+      year: 2024,
+      gri: { grade: "A", score: 79.3 },
+      sasb: { grade: "AA", score: 92.1 },
+      djsi: { grade: "A+", score: 86.7 },
+      kEsg: { grade: "B", score: 71.4 }
+    }
+  ]);
+
   const [loading] = useState(false);
 
-  return { emissionsData, marketData, esgTrendData, loading };
+  return { emissionsData, marketData, esgTrendData, esgMultiStandardData, loading };
 } 

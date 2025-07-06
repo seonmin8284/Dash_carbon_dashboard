@@ -8,6 +8,7 @@ const Chatbot = lazy(() => import("./pages/Chatbot"));
 const Strategy = lazy(() => import("./pages/Strategy"));
 const ProgramInfo = lazy(() => import("./pages/ProgramInfo"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const ReportGenerator = lazy(() => import("./pages/ReportGenerator"));
 
 // Simple loading component
 const LoadingSpinner = () => (
@@ -34,6 +35,7 @@ const App: React.FC = () => {
             <Route path="/strategy" element={<Strategy />} />
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/info" element={<ProgramInfo />} />
+            <Route path="/report" element={<ReportGenerator />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

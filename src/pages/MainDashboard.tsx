@@ -5,7 +5,7 @@ import QuickStats from "../components/QuickStats";
 import MainFeatures from "../components/MainFeatures";
 import ESGSettings from "../components/ESGSettings";
 import ESGRankingTable from "../components/ESGRankingTable";
-import CompanyStats from "../components/CompanyStats";
+import EmergencyAlerts from "../components/EmergencyAlerts";
 
 interface CompanyRanking {
   rank: number;
@@ -18,7 +18,7 @@ interface CompanyRanking {
 }
 
 const MainDashboard: React.FC = () => {
-  const { esgTrendData } = useData();
+  const { esgTrendData, esgMultiStandardData } = useData();
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
 
   // ApexCharts 로딩 상태 관리 (최상위에서 한 번만)
@@ -33,6 +33,198 @@ const MainDashboard: React.FC = () => {
     script.onload = () => setApexChartsLoaded(true);
     document.head.appendChild(script);
   }, []);
+
+  // Trend Chart 렌더링
+  useEffect(() => {
+    if (
+      !apexChartsLoaded ||
+      !esgMultiStandardData ||
+      esgMultiStandardData.length === 0
+    )
+      return;
+
+    const trendChartElement = document.getElementById("trend-chart");
+    if (!trendChartElement) return;
+
+    // 기존 차트 제거
+    if (trendChartElement.innerHTML) {
+      trendChartElement.innerHTML = "";
+    }
+
+    const options = {
+      series: [
+        {
+          name: "GRI 기준",
+          data: esgMultiStandardData.map((item) => item.gri.score),
+        },
+        {
+          name: "SASB 기준",
+          data: esgMultiStandardData.map((item) => item.sasb.score),
+        },
+        {
+          name: "DJSI 기준",
+          data: esgMultiStandardData.map((item) => item.djsi.score),
+        },
+        {
+          name: "K-ESG 기준",
+          data: esgMultiStandardData.map((item) => item.kEsg.score),
+        },
+      ],
+      chart: {
+        type: "line",
+        height: 350,
+        toolbar: {
+          show: false,
+        },
+      },
+      colors: ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"],
+      stroke: {
+        curve: "smooth",
+        width: 3,
+      },
+      grid: {
+        borderColor: "#E5E7EB",
+        strokeDashArray: 4,
+      },
+      xaxis: {
+        categories: esgMultiStandardData.map((item) => item.year.toString()),
+        labels: {
+          style: {
+            colors: "#6B7280",
+          },
+        },
+      },
+      yaxis: {
+        min: 50,
+        max: 100,
+        labels: {
+          style: {
+            colors: "#6B7280",
+          },
+        },
+      },
+      tooltip: {
+        theme: "light",
+        y: {
+          formatter: function (value: number) {
+            return value.toFixed(1) + "점";
+          },
+        },
+      },
+      markers: {
+        size: 6,
+        strokeColors: "#FFFFFF",
+        strokeWidth: 2,
+      },
+      legend: {
+        position: "top",
+        horizontalAlign: "left",
+        fontSize: "14px",
+        markers: {
+          width: 12,
+          height: 12,
+        },
+      },
+    };
+
+    const chart = new window.ApexCharts(trendChartElement, options);
+    chart.render();
+  }, [apexChartsLoaded, esgMultiStandardData]);
+
+  // KPI Chart 렌더링
+  useEffect(() => {
+    if (!apexChartsLoaded) return;
+
+    const kpiChartElement = document.getElementById("kpi-chart");
+    if (!kpiChartElement) return;
+
+    // 기존 차트 제거
+    if (kpiChartElement.innerHTML) {
+      kpiChartElement.innerHTML = "";
+    }
+
+    const options = {
+      series: [
+        {
+          name: "감축률",
+          data: [18.5, 22.1, 19.8, 25.3, 21.7, 23.9],
+        },
+        {
+          name: "할당효율",
+          data: [112.3, 108.7, 115.2, 102.8, 118.5, 110.3],
+        },
+        {
+          name: "ESG 점수",
+          data: [85.2, 88.7, 82.3, 91.5, 86.8, 89.1],
+        },
+      ],
+      chart: {
+        type: "bar",
+        height: 300,
+        toolbar: {
+          show: false,
+        },
+      },
+      colors: ["#10B981", "#3B82F6", "#F59E0B"],
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: "55%",
+          endingShape: "rounded",
+        },
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      stroke: {
+        show: true,
+        width: 2,
+        colors: ["transparent"],
+      },
+      xaxis: {
+        categories: [
+          "삼성전자",
+          "POSCO",
+          "LG화학",
+          "현대자동차",
+          "현대건설",
+          "한국전력",
+        ],
+        labels: {
+          style: {
+            colors: "#6B7280",
+          },
+        },
+      },
+      yaxis: {
+        title: {
+          text: "수치 (%)",
+          style: {
+            color: "#6B7280",
+          },
+        },
+        labels: {
+          style: {
+            colors: "#6B7280",
+          },
+        },
+      },
+      fill: {
+        opacity: 1,
+      },
+      tooltip: {
+        theme: "light",
+        y: {
+          formatter: function (value: number) {
+            return value + "%";
+          },
+        },
+      },
+    };
+
+    const chart = new window.ApexCharts(kpiChartElement, options);
+    chart.render();
+  }, [apexChartsLoaded]);
 
   // 사이드바 설정 상태
   const [companyName, setCompanyName] = useState("삼성전자");
@@ -103,24 +295,35 @@ const MainDashboard: React.FC = () => {
 
   // 차트 생성 함수들
   const createTrendChart = () => {
-    if (!apexChartsLoaded) return <div>차트 준비 중입니다...</div>;
-    if (!esgTrendData || esgTrendData.length === 0)
-      return <div>ESG 등급 추세 데이터가 없습니다.</div>;
-    return <div id="trend-chart" />;
+    if (!apexChartsLoaded)
+      return (
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          차트 로딩 중...
+        </div>
+      );
+    if (!esgMultiStandardData || esgMultiStandardData.length === 0)
+      return (
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          ESG 등급 추세 데이터가 없습니다.
+        </div>
+      );
+    return <div id="trend-chart" className="w-full" />;
   };
 
   const createKPIChart = () => {
-    if (!apexChartsLoaded) return <div>차트 준비 중입니다...</div>;
-    return <div id="kpi-chart" />;
+    if (!apexChartsLoaded)
+      return (
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          차트 로딩 중...
+        </div>
+      );
+    return <div id="kpi-chart" className="w-full" />;
   };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">
-          탄소배출권 통합 관리 시스템
-        </h1>
         <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
             통합 탄소배출권 관리 플랫폼
@@ -137,27 +340,30 @@ const MainDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Emergency Alerts */}
+      {/* <EmergencyAlerts /> */}
+
       {/* Quick Stats */}
       <QuickStats />
 
       {/* Main Features */}
-      <MainFeatures />
+      {/* <MainFeatures /> */}
 
       {/* ESG Ranking System */}
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-gray-50 border-b border-gray-200 p-6">
+        <div className="bg-gradient-to-r from-gray-100 via-gray-50 to-gray-200 border-b border-gray-300 p-6">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
             <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
             ESG 기반 탄소 감축 랭킹 시스템
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-gray-700 font-medium">
             실시간 ESG 성과 추적 및 경쟁 분석
           </p>
         </div>
 
         <div className="p-6">
           {/* ESG Settings */}
-          <ESGSettings
+          {/* <ESGSettings
             companyName={companyName}
             setCompanyName={setCompanyName}
             industry={industry}
@@ -168,40 +374,26 @@ const MainDashboard: React.FC = () => {
             setCurrentReductionRate={setCurrentReductionRate}
             currentAllocationRatio={currentAllocationRatio}
             setCurrentAllocationRatio={setCurrentAllocationRatio}
-          />
+          /> */}
 
           {/* ESG Ranking Board */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              탄소 감축 성과 기반 ESG 랭킹 보드
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            {/* Rankings Table */}
-            <ESGRankingTable rankings={rankings} currentCompany={companyName} />
-
-            {/* Current Company Stats */}
-            <CompanyStats
-              currentRank={currentRank}
-              currentEsgScore={currentEsgScore}
-              grade={grade}
-            />
-          </div>
+          <ESGRankingTable rankings={rankings} currentCompany={companyName} />
 
           {/* Trend Chart */}
           <div className="mb-6">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
-              ESG 등급 추세
+            <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
+              ESG 등급 추세 (4가지 기준)
             </h4>
-            {createTrendChart()}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              {createTrendChart()}
+            </div>
           </div>
 
           {/* KPI Comparison */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
               업종별·기업별 탄소 KPI 비교
-            </h3>
+            </h4>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -245,7 +437,11 @@ const MainDashboard: React.FC = () => {
           </div>
 
           {/* KPI Comparison Chart */}
-          <div className="mb-6">{createKPIChart()}</div>
+          <div className="mb-6">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              {createKPIChart()}
+            </div>
+          </div>
 
           {/* Badge System */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">

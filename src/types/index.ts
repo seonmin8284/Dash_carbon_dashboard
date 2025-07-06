@@ -80,4 +80,11 @@ declare global {
   }
 }
 
+// ApexCharts 타입 선언
+declare global {
+  interface Window {
+    ApexCharts: any;
+  }
+}
+
 export {}; 

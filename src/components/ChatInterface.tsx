@@ -36,7 +36,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       return "2030년까지 40% 감축 목표를 달성하기 위해서는 에너지 효율 개선, 재생에너지 전환, 공급망 최적화 등이 필요합니다. 현재 감축률은 18.5%로 목표 달성을 위해 추가 노력이 요구됩니다.";
     }
 
-    return "탄소배출권과 관련된 질문을 해주세요. 배출량, 가격, 구매 전략, 감축 목표 등에 대해 답변드릴 수 있습니다.";
+    if (lowerInput.includes("기업") || lowerInput.includes("할당량")) {
+      return "주요 기업별 탄소배출권 할당량은 포스코(2,450만톤), 현대차(1,230만톤), 삼성전자(890만톤) 순입니다. 기업들은 할당량을 초과하지 않도록 감축 노력을 지속하고 있습니다.";
+    }
+
+    if (lowerInput.includes("시장") || lowerInput.includes("거래")) {
+      return "탄소배출권 거래시장은 2021년부터 본격 운영되었으며, 현재 1,200여개 기업이 참여하고 있습니다. 거래량은 지속적으로 증가하고 있으며, 시장 유동성이 개선되고 있습니다.";
+    }
+
+    if (lowerInput.includes("정책") || lowerInput.includes("법")) {
+      return "탄소중립기본법과 온실가스 배출권의 할당 및 거래에 관한 법률에 따라 탄소배출권 제도가 운영되고 있습니다. 2030년까지 40% 감축 목표를 달성하기 위한 다양한 정책이 시행되고 있습니다.";
+    }
+
+    return "탄소배출권과 관련된 질문을 해주세요. 배출량, 가격, 구매 전략, 감축 목표, 기업 할당량, 시장 현황, 정책 등에 대해 답변드릴 수 있습니다.";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,18 +76,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-      <div className="bg-gray-50 border-b border-gray-200 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+    <div className="bg-white h-full flex flex-col w-full">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+        <h3 className="text-lg font-semibold flex items-center">
+          <MessageCircle className="h-5 w-5 mr-2" />
           AI 챗봇 상담
         </h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-blue-100 mt-1">
           탄소배출권 관련 질문을 해주세요
         </p>
       </div>
 
-      <div className="h-96 overflow-y-auto p-4 space-y-4">
+      <div className="h-[calc(100vh-200px)] overflow-y-auto overflow-x-hidden p-4 space-y-4">
         {chatMessages.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -90,10 +102,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                className={`max-w-[85%] px-3 py-2 rounded-lg text-sm break-words ${
                   message.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-900"
+                    ? "bg-blue-600 text-white ml-8"
+                    : "bg-gray-100 text-gray-900 mr-8"
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
@@ -110,25 +122,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )}
       </div>
 
-      <div className="border-t border-gray-200 p-4">
-        <form onSubmit={handleSubmit} className="flex space-x-2">
+      <div className="border-t border-gray-200 p-4 mt-auto">
+        <form onSubmit={handleSubmit} className="flex space-x-2 min-w-0">
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="질문을 입력하세요..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm min-w-0"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex-shrink-0 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Send className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={resetChat}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            className="flex-shrink-0 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
           >
             <RotateCcw className="h-4 w-4" />
           </button>
