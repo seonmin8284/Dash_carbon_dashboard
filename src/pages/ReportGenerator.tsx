@@ -1,361 +1,436 @@
-import React, { useState, useRef } from "react";
-import { FileText, Download, Upload, BookOpen, FileDown } from "lucide-react";
+import React, { useState } from "react";
 
-interface ExtractedData {
-  text: string;
-  toc: string;
-  structure: string;
-}
+// dnd-kit import 추가
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// 목차 노드 타입 정의
+type OutlineNode = {
+  id: string;
+  title: string;
+  children?: OutlineNode[] | null;
+};
 
 const ReportGenerator: React.FC = () => {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(
-    null
-  );
   const [topic, setTopic] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedReport, setGeneratedReport] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [templateText, setTemplateText] = useState("");
+  const [outline, setOutline] = useState<OutlineNode[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [reportContent, setReportContent] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
-  // 파일 업로드 처리
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      setUploadedFile(file);
-      setExtractedData(null);
-      setGeneratedReport("");
-    }
-  };
+  // id 부여 유틸
+  const generateId = () => Math.random().toString(36).slice(2, 10);
 
-  // 문서 분석
-  const analyzeDocument = async () => {
-    if (!uploadedFile) return;
+  // 목차에 id 자동 부여 (재귀)
+  function assignIds(nodes: any[]): OutlineNode[] {
+    return nodes.map((n) => ({
+      id: n.id || generateId(),
+      title: n.title,
+      children: n.children ? assignIds(n.children) : null,
+    }));
+  }
 
-    setIsAnalyzing(true);
+  // 드래그 핸들 아이콘 (SVG)
+  const DragHandle = () => (
+    <span
+      style={{
+        display: "inline-block",
+        cursor: "grab",
+        marginRight: 8,
+        verticalAlign: "middle",
+        userSelect: "none",
+        color: "#888",
+      }}
+      title="드래그로 순서 변경"
+    >
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <circle cx="6" cy="6" r="1.5" fill="currentColor" />
+        <circle cx="6" cy="10" r="1.5" fill="currentColor" />
+        <circle cx="6" cy="14" r="1.5" fill="currentColor" />
+        <circle cx="14" cy="6" r="1.5" fill="currentColor" />
+        <circle cx="14" cy="10" r="1.5" fill="currentColor" />
+        <circle cx="14" cy="14" r="1.5" fill="currentColor" />
+      </svg>
+    </span>
+  );
 
-    try {
-      // 파일을 Base64로 변환
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Data = e.target?.result as string;
+  // Sortable 아이템
+  function SortableItem({
+    node,
+    onEdit,
+    onAdd,
+    onDelete,
+    renderChildren,
+  }: any) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: node.id });
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+      background: isDragging ? "#e0e7ff" : "#f9fafb",
+      marginBottom: 4,
+      padding: 8,
+      borderRadius: 6,
+      boxShadow: isDragging
+        ? "0 2px 8px rgba(59,130,246,0.15)"
+        : "0 1px 2px rgba(0,0,0,0.03)",
+      display: "flex",
+      alignItems: "center",
+      border: isDragging ? "2px solid #2563eb" : "1px solid #e5e7eb",
+      cursor: "grab",
+    } as React.CSSProperties;
+    return (
+      <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <DragHandle />
+        <input
+          value={node.title}
+          onChange={(e) => onEdit(node.id, e.target.value)}
+          style={{
+            fontSize: 15,
+            marginRight: 8,
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            outline: "none",
+          }}
+        />
+        <button onClick={() => onAdd(node.id)} style={{ marginRight: 4 }}>
+          하위 추가
+        </button>
+        <button onClick={() => onDelete(node.id)} style={{ color: "red" }}>
+          삭제
+        </button>
+        {node.children &&
+          node.children.length > 0 &&
+          renderChildren(node.children)}
+      </li>
+    );
+  }
 
-        const response = await fetch(
-          "http://localhost:5001/api/analyze-document",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              pdf_data: base64Data,
-            }),
-          }
+  // 트리 편집 + 드래그
+  function DraggableOutlineTree({
+    nodes,
+    setNodes,
+  }: {
+    nodes: OutlineNode[];
+    setNodes: (n: OutlineNode[]) => void;
+  }) {
+    const sensors = useSensors(useSensor(PointerSensor));
+    // 노드 편집
+    const handleEdit = (id: string, value: string) => {
+      const update = (arr: OutlineNode[]): OutlineNode[] =>
+        arr.map((n) =>
+          n.id === id
+            ? { ...n, title: value }
+            : { ...n, children: n.children ? update(n.children) : n.children }
         );
-
-        const data = await response.json();
-
-        if (data.success) {
-          setExtractedData({
-            text: "PDF 텍스트 추출 완료",
-            toc: data.toc,
-            structure: data.structure,
-          });
-        } else {
-          alert(`분석 오류: ${data.error}`);
-        }
-      };
-
-      reader.readAsDataURL(uploadedFile);
-    } catch (error) {
-      alert(`서버 연결 오류: ${error}`);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  // 보고서 생성
-  const generateReport = async () => {
-    if (!extractedData || !topic || !uploadedFile) return;
-
-    setIsGenerating(true);
-
-    try {
-      // 파일을 Base64로 변환
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Data = e.target?.result as string;
-
-        const response = await fetch(
-          "http://localhost:5001/api/generate-report",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              topic: topic,
-              pdf_data: base64Data,
-            }),
-          }
+      setNodes(update(nodes));
+    };
+    // 하위 추가
+    const handleAdd = (id: string) => {
+      const update = (arr: OutlineNode[]): OutlineNode[] =>
+        arr.map((n) =>
+          n.id === id
+            ? {
+                ...n,
+                children: [
+                  ...(n.children || []),
+                  { id: generateId(), title: "새 항목", children: null },
+                ],
+              }
+            : { ...n, children: n.children ? update(n.children) : n.children }
         );
+      setNodes(update(nodes));
+    };
+    // 삭제
+    const handleDelete = (id: string) => {
+      const remove = (arr: OutlineNode[]): OutlineNode[] =>
+        arr
+          .filter((n) => n.id !== id)
+          .map((n) => ({
+            ...n,
+            children: n.children ? remove(n.children) : n.children,
+          }));
+      setNodes(remove(nodes));
+    };
 
-        const data = await response.json();
+    // 드래그 종료(동일 레벨 내 순서 변경만 지원, 계층 이동은 별도 구현 필요)
+    const handleDragEnd = (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      // 최상위 레벨만 예시 (중첩 계층 이동은 별도 구현 필요)
+      const oldIndex = nodes.findIndex((n) => n.id === active.id);
+      const newIndex = nodes.findIndex((n) => n.id === over.id);
+      setNodes(arrayMove(nodes, oldIndex, newIndex));
+    };
 
-        if (data.success) {
-          setGeneratedReport(data.report);
-        } else {
-          alert(`보고서 생성 오류: ${data.error}`);
-        }
-      };
+    // 재귀 렌더링
+    const renderTree = (arr: OutlineNode[]) => (
+      <SortableContext
+        items={arr.map((n) => n.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <ul style={{ marginLeft: 16 }}>
+          {arr.map((node) => (
+            <SortableItem
+              key={node.id}
+              node={node}
+              onEdit={handleEdit}
+              onAdd={handleAdd}
+              onDelete={handleDelete}
+              renderChildren={(children: OutlineNode[]) => renderTree(children)}
+            />
+          ))}
+        </ul>
+      </SortableContext>
+    );
 
-      reader.readAsDataURL(uploadedFile);
-    } catch (error) {
-      alert(`서버 연결 오류: ${error}`);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    return (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        {renderTree(nodes)}
+      </DndContext>
+    );
+  }
 
-  // Word 문서 다운로드
-  const downloadReport = async () => {
-    if (!generatedReport || !topic || !uploadedFile) return;
+  // 목차 트리 재귀 렌더링 함수
+  const renderOutline = (nodes: OutlineNode[]) => (
+    <ul style={{ marginLeft: 16 }}>
+      {nodes.map((node, idx) => (
+        <li key={idx} style={{ marginBottom: 4 }}>
+          {node.title}
+          {node.children &&
+            node.children.length > 0 &&
+            renderOutline(node.children)}
+        </li>
+      ))}
+    </ul>
+  );
 
+  // API 호출 함수 (fetch 사용)
+  const handleGenerate = async () => {
+    setLoading(true);
+    setError("");
     try {
-      // 파일을 Base64로 변환
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Data = e.target?.result as string;
-
-        const response = await fetch(
-          "http://localhost:5001/api/generate-report",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              topic: topic,
-              pdf_data: base64Data,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (data.success && data.docx_data) {
-          // Base64를 Blob으로 변환
-          const byteCharacters = atob(data.docx_data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], {
-            type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          });
-
-          // 다운로드
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `${topic}_보고서.docx`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } else {
-          alert("Word 문서 생성에 실패했습니다.");
+      const res = await fetch(
+        "http://localhost:8000/generate-outline-from-topic",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ topic }),
         }
-      };
-
-      reader.readAsDataURL(uploadedFile);
-    } catch (error) {
-      alert(`다운로드 오류: ${error}`);
+      );
+      if (!res.ok) throw new Error("API 응답 오류");
+      const data = await res.json();
+      setTemplateText(data.template_text);
+      setOutline(assignIds(data.outline.outline)); // id 부여
+    } catch (e: any) {
+      setError("API 호출 중 오류가 발생했습니다.");
     }
+    setLoading(false);
   };
+
+  // outline: [{ id, title, children: [...] }, ...] 형태를
+  // chapters: [{ ...node, sections: [...] }, ...] 형태로 변환
+  function convertOutlineKeys(nodes: OutlineNode[]): any[] {
+    return nodes.map((node) => ({
+      ...node,
+      sections: node.children ? convertOutlineKeys(node.children) : undefined,
+      children: undefined, // children 키 제거
+    }));
+  }
+
+  // SSE를 이용한 보고서 본문 생성 함수
+  const handleGenerateReport = () => {
+    setReportContent("");
+    setIsGeneratingReport(true);
+
+    // outline 변환: children -> sections, 최상위는 chapters
+    const convertedOutline = convertOutlineKeys(outline);
+
+    const eventSource = new EventSourcePolyfill(
+      "http://localhost:8000/generate-report",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        payload: JSON.stringify({
+          topic,
+          outline: { chapters: convertedOutline }, // 서버가 chapters를 기대할 때
+        }),
+        method: "POST",
+      }
+    );
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "done") {
+          setIsGeneratingReport(false);
+          eventSource.close();
+        } else if (data.payload) {
+          setReportContent((prev) => prev + data.payload);
+        }
+      } catch (e) {
+        setIsGeneratingReport(false);
+        eventSource.close();
+      }
+    };
+    eventSource.onerror = () => {
+      setIsGeneratingReport(false);
+      eventSource.close();
+      setError("보고서 생성 중 오류가 발생했습니다.");
+    };
+  };
+
+  // EventSource Polyfill (fetch-sse 방식)
+  // 브라우저 기본 EventSource는 POST를 지원하지 않으므로 polyfill 필요
+  type EventSourcePolyfillOptions = {
+    headers?: Record<string, string>;
+    payload?: string;
+    method?: string;
+  };
+  class EventSourcePolyfill {
+    controller: AbortController;
+    onmessage: ((event: { data: string }) => void) | null;
+    onerror: ((err: any) => void) | null;
+    constructor(url: string, options: EventSourcePolyfillOptions) {
+      this.controller = new AbortController();
+      this.onmessage = null;
+      this.onerror = null;
+      fetch(url, {
+        method: options.method || "GET",
+        headers: options.headers,
+        body: options.payload,
+        signal: this.controller.signal,
+      })
+        .then(async (res) => {
+          if (!res.body) throw new Error("No response body");
+          const reader = res.body.getReader();
+          let buffer = "";
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += new TextDecoder().decode(value);
+            let lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+              if (line.startsWith("data:")) {
+                const data = line.replace(/^data:\s*/, "");
+                if (this.onmessage) this.onmessage({ data });
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          if (this.onerror) this.onerror(err);
+        });
+    }
+    close() {
+      this.controller.abort();
+    }
+  }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          📄 AI 기반 보고서 생성기
-        </h1>
-        <p className="text-gray-600">
-          PDF 문서를 업로드하여 AI가 분석하고 새로운 주제의 보고서를 자동으로
-          생성합니다.
-        </p>
-      </div>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
+      <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>
+        보고서 주제 입력
+      </h2>
+      <input
+        type="text"
+        value={topic}
+        onChange={(e) => setTopic(e.target.value)}
+        placeholder="보고서 주제를 입력하세요"
+        style={{ width: "100%", padding: 8, marginBottom: 12, fontSize: 16 }}
+      />
+      <button
+        onClick={handleGenerate}
+        disabled={loading || !topic}
+        style={{
+          padding: "8px 20px",
+          fontSize: 16,
+          fontWeight: 600,
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: 4,
+          cursor: loading || !topic ? "not-allowed" : "pointer",
+        }}
+      >
+        {loading ? "생성 중..." : "보고서 목차 생성"}
+      </button>
+      {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
 
-      {/* 파일 업로드 섹션 */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <Upload className="h-6 w-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-800">
-            PDF 문서 업로드
-          </h2>
-        </div>
-
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-
-          {!uploadedFile ? (
-            <div>
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">
-                PDF 파일을 선택하거나 여기에 드래그하세요
-              </p>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                파일 선택
-              </button>
-            </div>
-          ) : (
-            <div>
-              <FileText className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <p className="text-gray-800 font-medium mb-2">
-                {uploadedFile.name}
-              </p>
-              <p className="text-gray-600 mb-4">
-                파일이 성공적으로 업로드되었습니다.
-              </p>
-              <button
-                onClick={analyzeDocument}
-                disabled={isAnalyzing}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                {isAnalyzing ? "분석 중..." : "문서 분석 시작"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 분석 결과 섹션 */}
-      {extractedData && (
-        <div className="space-y-6">
-          {/* 목차 추출 결과 */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <BookOpen className="h-6 w-6 text-blue-600" />
-              <h3 className="text-xl font-semibold text-gray-800">
-                문서 목차 자동 추출
-              </h3>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <pre className="text-sm text-gray-800 whitespace-pre-wrap">
-                {extractedData.toc}
-              </pre>
-            </div>
-          </div>
-
-          {/* 문서 형식 요약 */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <FileText className="h-6 w-6 text-blue-600" />
-              <h3 className="text-xl font-semibold text-gray-800">
-                문서 형식 요약
-              </h3>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              {extractedData.structure}
-            </p>
-          </div>
-
-          {/* 새 보고서 주제 입력 */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <FileText className="h-6 w-6 text-blue-600" />
-              <h3 className="text-xl font-semibold text-gray-800">
-                새 보고서 주제 입력
-              </h3>
-            </div>
-            <div className="space-y-4">
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="예: 탄소중립 추진 전략"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                onClick={generateReport}
-                disabled={!topic || isGenerating}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {isGenerating ? "보고서 생성 중..." : "보고서 생성"}
-              </button>
-            </div>
-          </div>
+      {outline && outline.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>
+            목차 트리(드래그/수정 가능)
+          </h3>
+          <DraggableOutlineTree nodes={outline} setNodes={setOutline} />
+          <button
+            onClick={handleGenerateReport}
+            disabled={isGeneratingReport || !topic || outline.length === 0}
+            style={{
+              marginTop: 16,
+              padding: "8px 20px",
+              fontSize: 16,
+              fontWeight: 600,
+              background: "#059669",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              cursor: isGeneratingReport ? "not-allowed" : "pointer",
+            }}
+          >
+            {isGeneratingReport ? "보고서 생성 중..." : "보고서 본문 생성"}
+          </button>
         </div>
       )}
-
-      {/* 생성된 보고서 섹션 */}
-      {generatedReport && (
-        <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <FileDown className="h-6 w-6 text-green-600" />
-              <h3 className="text-xl font-semibold text-gray-800">
-                생성된 보고서
-              </h3>
-            </div>
-            <button
-              onClick={downloadReport}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              <span>다운로드</span>
-            </button>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-            <pre className="text-sm text-gray-800 whitespace-pre-wrap">
-              {generatedReport}
-            </pre>
-          </div>
+      {reportContent && (
+        <div style={{ marginTop: 32 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>
+            보고서 본문
+          </h3>
+          <pre
+            style={{
+              background: "#f4f4f4",
+              padding: 16,
+              borderRadius: 6,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {reportContent}
+          </pre>
         </div>
       )}
-
-      {/* 사용 가이드 */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mt-8">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
-          📋 사용 가이드
-        </h3>
-        <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
-          <div>
-            <h4 className="font-semibold mb-2">1. 문서 업로드</h4>
-            <p>
-              참고할 PDF 문서를 업로드하세요. 보고서 형식의 문서가 가장
-              좋습니다.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">2. 문서 분석</h4>
-            <p>AI가 문서의 목차와 구조를 자동으로 분석합니다.</p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">3. 주제 입력</h4>
-            <p>새로 작성할 보고서의 주제를 입력하세요.</p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">4. 보고서 생성</h4>
-            <p>
-              AI가 참고 문서의 형식을 학습하여 새로운 주제의 보고서를
-              생성합니다.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

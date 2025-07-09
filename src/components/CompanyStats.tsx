@@ -4,12 +4,20 @@ interface CompanyStatsProps {
   currentRank: number;
   currentEsgScore: number;
   grade: string;
+  companyName: string;
+  currentReductionRate: number;
+  currentAllocationRatio: number;
+  medal: string;
 }
 
 const CompanyStats: React.FC<CompanyStatsProps> = ({
   currentRank,
   currentEsgScore,
   grade,
+  companyName,
+  currentReductionRate,
+  currentAllocationRatio,
+  medal,
 }) => {
   return (
     <div>
@@ -19,6 +27,24 @@ const CompanyStats: React.FC<CompanyStatsProps> = ({
 
       {/* Desktop Layout - Vertical */}
       <div className="hidden lg:block space-y-4">
+        {/* Badge Display */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-6 rounded-lg text-center">
+            <div className="text-3xl mb-3">{medal}</div>
+            <div className="text-xl font-bold text-gray-900 mb-2">
+              {grade} 등급
+            </div>
+            <div className="text-base text-gray-700 mb-2">{companyName}</div>
+            <div className="text-gray-600 text-sm">
+              ESG 점수: {currentEsgScore}
+            </div>
+            <div className="mt-3 text-xs text-gray-500">
+              감축률: {currentReductionRate}% | 할당효율:{" "}
+              {currentAllocationRatio}%
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
           <div className="text-center">
             <div className="text-sm text-gray-600 mb-1">현재 순위</div>
@@ -26,14 +52,6 @@ const CompanyStats: React.FC<CompanyStatsProps> = ({
               {currentRank}위
             </div>
             <div className="text-sm text-gray-500">상위 20%</div>
-          </div>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div className="text-center">
-            <div className="text-sm text-gray-600 mb-1">ESG 등급</div>
-            <div className="text-2xl font-bold text-gray-900">{grade}</div>
-            <div className="text-sm text-gray-500">{currentEsgScore}점</div>
           </div>
         </div>
       </div>

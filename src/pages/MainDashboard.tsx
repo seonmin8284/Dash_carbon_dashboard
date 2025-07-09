@@ -449,55 +449,6 @@ const MainDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Badge System */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">
-              ESG 등급 배지 + 소셜 공유
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Badge Display */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-8 rounded-lg text-center">
-                <div className="text-4xl mb-4">{medal}</div>
-                <div className="text-2xl font-bold text-gray-900 mb-2">
-                  {grade} 등급
-                </div>
-                <div className="text-lg text-gray-700 mb-2">{companyName}</div>
-                <div className="text-gray-600">ESG 점수: {currentEsgScore}</div>
-                <div className="mt-4 text-sm text-gray-500">
-                  감축률: {currentReductionRate}% | 할당효율:{" "}
-                  {currentAllocationRatio}%
-                </div>
-              </div>
-            </div>
-
-            {/* Social Sharing */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                ESG 성과 공유
-              </h4>
-              <p className="text-gray-600 mb-4">
-                당신의 ESG 성과를 소셜 미디어에 공유하세요!
-              </p>
-
-              <div className="space-y-3">
-                <button className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  LinkedIn에 공유
-                </button>
-
-                <button className="w-full flex items-center justify-center px-4 py-3 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors">
-                  Twitter에 공유
-                </button>
-
-                <button className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  이메일로 공유
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* AI Simulator */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4">

@@ -192,7 +192,15 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
         {/* CompanyStats - Desktop (넓을 때만) */}
         {!isNarrow && (
           <div className="w-80 flex-shrink-0">
-            <CompanyStats currentRank={6} currentEsgScore={85.2} grade="A" />
+            <CompanyStats
+              currentRank={6}
+              currentEsgScore={85.2}
+              grade="A"
+              companyName="삼성전자"
+              currentReductionRate={18.5}
+              currentAllocationRatio={112.3}
+              medal="🥇"
+            />
           </div>
         )}
       </div>
@@ -200,7 +208,15 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
       {/* CompanyStats - 하단 (좁을 때만) */}
       {isNarrow && (
         <div className="mt-6">
-          <CompanyStats currentRank={6} currentEsgScore={85.2} grade="A" />
+          <CompanyStats
+            currentRank={6}
+            currentEsgScore={85.2}
+            grade="A"
+            companyName="삼성전자"
+            currentReductionRate={18.5}
+            currentAllocationRatio={112.3}
+            medal="🥇"
+          />
         </div>
       )}
     </div>
