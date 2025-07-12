@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useData } from "../hooks/useData";
 import {
   Bell,
   TrendingUp,
@@ -11,12 +12,22 @@ import {
   Lightbulb,
   Target,
   ShoppingCart,
+  LineChart,
 } from "lucide-react";
 import StrategySettings from "../components/StrategySettings";
 import TimingChart from "../components/TimingChart";
 import ROIChart from "../components/ROIChart";
+import MarketChart from "../components/MarketChart";
+import {
+  EmissionData,
+  MarketData,
+  ChatMessage,
+  AllocationData,
+  MapData,
+} from "../types";
 
 const Strategy: React.FC = () => {
+  const { marketData, loading } = useData();
   const [companySize, setCompanySize] = useState("대기업");
   const [annualEmission, setAnnualEmission] = useState(50000);
   const [currentAllocation, setCurrentAllocation] = useState(40000);
@@ -24,6 +35,7 @@ const Strategy: React.FC = () => {
   const [riskTolerance, setRiskTolerance] = useState("중립적");
   const [analysisPeriod, setAnalysisPeriod] = useState("1년");
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(0);
 
   // ApexCharts 로딩 확인
   useEffect(() => {
@@ -149,31 +161,102 @@ const Strategy: React.FC = () => {
             </div>
           </div>
 
-          {/* Timing Chart */}
+          {/* Market Chart */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Target className="h-5 w-5 mr-2 text-red-600" />
-              최적 매수 타이밍 분석
+              <LineChart className="h-5 w-5 mr-2 text-blue-600" />
+              KAU24 시장 동향
             </h2>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <TimingChart
-                dates={dates}
-                prices={prices}
-                volumes={volumes}
-                recommendations={recommendations}
-                apexChartsLoaded={apexChartsLoaded}
-              />
-            </div>
-          </div>
 
-          {/* ROI Chart */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2 text-yellow-600" />
-              전략별 ROI 비교
-            </h2>
+            {/* 월별 필터 */}
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-2 mb-2">
+                <span className="text-sm font-medium text-gray-700 mr-2">
+                  월별 필터:
+                </span>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <button
+                    key={month}
+                    onClick={() => setSelectedMonth(month)}
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+                      selectedMonth === month
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {month}월
+                  </button>
+                ))}
+                <button
+                  onClick={() => setSelectedMonth(0)}
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+                    selectedMonth === 0
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  전체
+                </button>
+              </div>
+
+              {/* 선택된 필터 정보 */}
+              <div className="text-sm text-gray-600">
+                {loading ? (
+                  <span>데이터 로딩 중...</span>
+                ) : selectedMonth === 0 ? (
+                  <span>
+                    전체 월 데이터 표시 중 (총 {marketData?.length || 0}개
+                    데이터)
+                  </span>
+                ) : (
+                  <span>
+                    {selectedMonth}월 데이터 표시 중 (
+                    {marketData?.filter((d) => d.월 === selectedMonth).length ||
+                      0}
+                    개 데이터)
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <ROIChart apexChartsLoaded={apexChartsLoaded} />
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">시장 데이터 로딩 중...</p>
+                  </div>
+                </div>
+              ) : marketData && marketData.length > 0 ? (
+                <MarketChart
+                  data={marketData
+                    .filter(
+                      (d) => selectedMonth === 0 || d.월 === selectedMonth
+                    )
+                    .map((d) => ({
+                      date: d.일자.toISOString().split("T")[0], // YYYY-MM-DD 형식으로 변경
+                      open: d.시가,
+                      high: d.고가,
+                      low: d.저가,
+                      close: d.종가,
+                      volume: d.거래량,
+                    }))}
+                  showStats={true}
+                  showBuySignals={true}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <div className="text-gray-400 text-4xl mb-4">📊</div>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">
+                      시장 데이터를 불러올 수 없습니다
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      잠시 후 다시 시도해주세요
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

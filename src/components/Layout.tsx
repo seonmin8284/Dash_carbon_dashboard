@@ -102,18 +102,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     onMouseLeave={() => setStrategyDropdownOpen(false)}
                   >
                     <Link
-                      to="/strategy"
-                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      <ShoppingCart className="h-5 w-5" />
-                      <span className="font-medium">구매 전략</span>
-                    </Link>
-                    <Link
                       to="/strategy-analysis"
                       className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
                     >
                       <Target className="h-5 w-5" />
                       <span className="font-medium">감축 전략</span>
+                    </Link>
+                    <Link
+                      to="/strategy"
+                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      <span className="font-medium">구매 전략</span>
                     </Link>
                   </div>
                 )}
@@ -187,20 +187,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {strategyDropdownOpen && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
                     <Link
-                      to="/strategy"
-                      className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 text-gray-600 text-xs"
-                      onClick={() => setStrategyDropdownOpen(false)}
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      <span>구매 전략</span>
-                    </Link>
-                    <Link
                       to="/strategy-analysis"
                       className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 text-gray-600 text-xs"
                       onClick={() => setStrategyDropdownOpen(false)}
                     >
                       <Target className="h-4 w-4" />
                       <span>감축 전략</span>
+                    </Link>
+
+                    <Link
+                      to="/strategy"
+                      className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 text-gray-600 text-xs"
+                      onClick={() => setStrategyDropdownOpen(false)}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      <span>구매 전략</span>
                     </Link>
                   </div>
                 )}
