@@ -11,6 +11,9 @@ export interface MarketData {
   일자: Date;
   종목명: string;
   시가: number;
+  고가: number;
+  저가: number;
+  종가: number;
   거래량: number;
   거래대금: number;
   연도: number;

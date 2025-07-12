@@ -18,6 +18,7 @@ import {
 import EmissionsChart from "../components/EmissionsChart";
 import MarketChart from "../components/MarketChart";
 import GaugeCharts from "../components/GaugeCharts";
+import EmissionChart from "../components/EmissionChart";
 
 const Dashboard: React.FC = () => {
   // 오류 상태 관리
@@ -57,7 +58,7 @@ const Dashboard: React.FC = () => {
 
   const { emissionsData, marketData, loading } = useData();
   const [selectedYear, setSelectedYear] = useState(2024);
-  const [selectedMonth, setSelectedMonth] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState(0);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
@@ -713,39 +714,75 @@ const Dashboard: React.FC = () => {
 
         <div className="p-6">
           {/* Year/Month Selector */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                연도 선택
-              </label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {Array.from({ length: 11 }, (_, i) => 2020 + i).map((year) => (
-                  <option key={year} value={year}>
-                    {year}년
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row gap-6">
+              {/* 연도 슬라이더 */}
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    연도 선택
+                  </label>
+                  <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    {selectedYear}년
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="range"
+                    min="2020"
+                    max="2030"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${
+                        ((selectedYear - 2020) / 10) * 100
+                      }%, #E5E7EB ${
+                        ((selectedYear - 2020) / 10) * 100
+                      }%, #E5E7EB 100%)`,
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>2020</span>
+                    <span>2025</span>
+                    <span>2030</span>
+                  </div>
+                </div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                월 선택
-              </label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                  <option key={month} value={month}>
-                    {month}월
-                  </option>
-                ))}
-              </select>
+              {/* 월 슬라이더 */}
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    월 선택
+                  </label>
+                  <span className="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">
+                    {selectedMonth === 0 ? "전체" : `${selectedMonth}월`}
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="range"
+                    min="0"
+                    max="12"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, #10B981 0%, #10B981 ${
+                        (selectedMonth / 12) * 100
+                      }%, #E5E7EB ${
+                        (selectedMonth / 12) * 100
+                      }%, #E5E7EB 100%)`,
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>전체</span>
+                    <span>6월</span>
+                    <span>12월</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -762,7 +799,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Emissions Chart */}
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <Building2 className="h-5 w-5 mr-2 text-red-600" />
               연도별 탄소배출량 추이
@@ -781,6 +818,15 @@ const Dashboard: React.FC = () => {
                 selectedYear={selectedYear.toString()}
               />
             </div>
+          </div> */}
+
+          {/* Greenhouse Gas Emission Chart */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <Globe className="h-5 w-5 mr-2 text-green-600" />
+              온실가스 배출량 현황 (환경부 데이터)
+            </h2>
+            <EmissionChart />
           </div>
 
           {/* Market Chart */}
@@ -789,39 +835,70 @@ const Dashboard: React.FC = () => {
               <LineChart className="h-5 w-5 mr-2 text-blue-600" />
               KAU24 시장 동향
             </h2>
+
+            {/* 월별 필터 */}
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-2 mb-2">
+                <span className="text-sm font-medium text-gray-700 mr-2">
+                  월별 필터:
+                </span>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <button
+                    key={month}
+                    onClick={() => setSelectedMonth(month)}
+                    className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+                      selectedMonth === month
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {month}월
+                  </button>
+                ))}
+                <button
+                  onClick={() => setSelectedMonth(0)}
+                  className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+                    selectedMonth === 0
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  전체
+                </button>
+              </div>
+
+              {/* 선택된 필터 정보 */}
+              <div className="text-sm text-gray-600">
+                {selectedMonth === 0 ? (
+                  <span>
+                    전체 월 데이터 표시 중 (총 {marketData.length}개 데이터)
+                  </span>
+                ) : (
+                  <span>
+                    {selectedMonth}월 데이터 표시 중 (
+                    {marketData.filter((d) => d.월 === selectedMonth).length}개
+                    데이터)
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
               <MarketChart
-                data={marketData.map((d) => ({
-                  date: d.연도.toString(),
-                  price: d.시가,
-                  volume: d.거래량,
-                }))}
+                data={marketData
+                  .filter((d) => selectedMonth === 0 || d.월 === selectedMonth)
+                  .map((d) => ({
+                    date: d.일자.toISOString().split("T")[0], // YYYY-MM-DD 형식으로 변경
+                    open: d.시가,
+                    high: d.고가,
+                    low: d.저가,
+                    close: d.종가,
+                    volume: d.거래량,
+                  }))}
+                showStats={true}
               />
             </div>
           </div>
-
-          {/* 업체별 할당량 현황 */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-purple-600" />
-              업체별 할당량 현황 ({selectedYear}년)
-            </h2>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div id="allocation-chart"></div>
-            </div>
-          </div>
-
-          {/* 지역별 이산화탄소 농도 시계열 */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <MapPin className="h-5 w-5 mr-2 text-orange-600" />
-              지역별 이산화탄소 농도 시계열 ({selectedYear}년)
-            </h2>
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div id="co2-timeseries-chart"></div>
-            </div>
-          </div>
-
           {/* 지역별 이산화탄소 농도 현황 */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -1000,6 +1077,32 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* 업체별 할당량 현황과 지역별 이산화탄소 농도 시계열 */}
+          <div className="mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 업체별 할당량 현황 */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-purple-600" />
+                  업체별 할당량 현황 ({selectedYear}년)
+                </h2>
+                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                  <div id="allocation-chart"></div>
+                </div>
+              </div>
+
+              {/* 지역별 이산화탄소 농도 시계열 */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <MapPin className="h-5 w-5 mr-2 text-orange-600" />
+                  지역별 이산화탄소 농도 시계열 ({selectedYear}년)
+                </h2>
+                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                  <div id="co2-timeseries-chart"></div>
                 </div>
               </div>
             </div>

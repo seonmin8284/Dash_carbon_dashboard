@@ -3,15 +3,49 @@ import React, { useEffect, useRef, useState } from "react";
 interface MarketChartProps {
   data: Array<{
     date: string;
-    price: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
     volume: number;
   }>;
+  showStats?: boolean;
 }
 
-const MarketChart: React.FC<MarketChartProps> = ({ data }) => {
+const MarketChart: React.FC<MarketChartProps> = ({
+  data,
+  showStats = true,
+}) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<any>(null);
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
+
+  // 통계 계산
+  const stats = React.useMemo(() => {
+    if (!data || data.length === 0) return null;
+
+    const prices = data.map((d) => d.close);
+    const volumes = data.map((d) => d.volume);
+    const highs = data.map((d) => d.high);
+    const lows = data.map((d) => d.low);
+
+    const avgPrice =
+      prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const maxPrice = Math.max(...highs);
+    const minPrice = Math.min(...lows);
+    const totalVolume = volumes.reduce((sum, volume) => sum + volume, 0);
+    const avgVolume = totalVolume / volumes.length;
+
+    return {
+      avgPrice: Math.round(avgPrice),
+      maxPrice,
+      minPrice,
+      totalVolume,
+      avgVolume: Math.round(avgVolume),
+      priceChange: maxPrice - minPrice,
+      priceChangePercent: (((maxPrice - minPrice) / minPrice) * 100).toFixed(1),
+    };
+  }, [data]);
 
   // ApexCharts 동적 로드
   useEffect(() => {
@@ -45,40 +79,49 @@ const MarketChart: React.FC<MarketChartProps> = ({ data }) => {
     }
 
     // 데이터 검증 및 기본값 처리
-    const validPrices = data.map((item) =>
-      isNaN(item.price) ? 0 : item.price
-    );
-    const validVolumes = data.map((item) =>
-      isNaN(item.volume) ? 0 : item.volume
-    );
+    const validData = data.map((item) => ({
+      x: new Date(item.date).getTime(),
+      y: [
+        isNaN(item.open) ? 0 : item.open,
+        isNaN(item.high) ? 0 : item.high,
+        isNaN(item.low) ? 0 : item.low,
+        isNaN(item.close) ? 0 : item.close,
+      ],
+    }));
+
+    const validVolumes = data.map((item) => ({
+      x: new Date(item.date).getTime(),
+      y: isNaN(item.volume) ? 0 : item.volume,
+    }));
+
     const validDates = data
       .map((item) => item.date || "")
       .filter((date) => date);
 
     const options = {
       chart: {
-        type: "line" as const,
+        type: "candlestick" as const,
         height: 400,
         toolbar: {
           show: false,
+        },
+        animations: {
+          enabled: true,
+          easing: "easeinout",
+          speed: 800,
         },
       },
       series: [
         {
           name: "배출권 가격",
-          type: "line" as const,
-          data: validPrices.map((price, index) => ({
-            x: validDates[index] || index,
-            y: price,
-          })),
+          type: "candlestick" as const,
+          data: validData,
         },
         {
           name: "거래량",
           type: "column" as const,
-          data: validVolumes.map((volume, index) => ({
-            x: validDates[index] || index,
-            y: volume,
-          })),
+          data: validVolumes,
+          opacity: 0.6,
         },
       ],
       xaxis: {
@@ -86,14 +129,25 @@ const MarketChart: React.FC<MarketChartProps> = ({ data }) => {
         title: {
           text: "날짜",
         },
+        labels: {
+          format: "MM/dd",
+          rotate: -45,
+          rotateAlways: false,
+        },
+        tickAmount: 12, // 월별로 표시
       },
       yaxis: [
         {
           title: {
             text: "가격 (원)",
           },
-          min: 0,
-          max: Math.max(...validPrices) * 1.1,
+          min: Math.min(...data.map((d) => d.low)) * 0.95,
+          max: Math.max(...data.map((d) => d.high)) * 1.05,
+          labels: {
+            formatter: function (value: number) {
+              return value.toLocaleString();
+            },
+          },
         },
         {
           opposite: true,
@@ -101,19 +155,66 @@ const MarketChart: React.FC<MarketChartProps> = ({ data }) => {
             text: "거래량",
           },
           min: 0,
-          max: Math.max(...validVolumes) * 1.1,
+          max: Math.max(...data.map((d) => d.volume)) * 1.1,
+          labels: {
+            formatter: function (value: number) {
+              return (value / 1000).toFixed(0) + "K";
+            },
+          },
         },
       ],
       title: {
-        text: "배출권 시장 동향",
+        text: "KAU24 배출권 시장 동향 (OHLC)",
         align: "center" as const,
+        style: {
+          fontSize: "16px",
+          fontWeight: "bold",
+        },
       },
-      colors: ["#3b82f6", "#10b981"],
-      stroke: {
-        width: 2,
+      colors: ["#3b82f6", "#e5e7eb"],
+      plotOptions: {
+        candlestick: {
+          colors: {
+            upward: "#10b981",
+            downward: "#ef4444",
+          },
+          wick: {
+            useFillColor: true,
+          },
+        },
+        bar: {
+          columnWidth: "60%",
+        },
       },
-      markers: {
-        size: 4,
+      tooltip: {
+        enabled: true,
+        theme: "light",
+        x: {
+          format: "MM/dd/yyyy",
+        },
+        y: {
+          formatter: function (
+            value: any,
+            { seriesIndex, dataPointIndex, w }: any
+          ) {
+            if (seriesIndex === 0) {
+              const data = w.globals.seriesCandleO[seriesIndex][dataPointIndex];
+              return [
+                `시가: ${data[0].toLocaleString()}원`,
+                `고가: ${data[1].toLocaleString()}원`,
+                `저가: ${data[2].toLocaleString()}원`,
+                `종가: ${data[3].toLocaleString()}원`,
+              ].join("<br>");
+            } else if (seriesIndex === 1) {
+              return `거래량: ${value.toLocaleString()}`;
+            }
+            return `${value.toLocaleString()}원`;
+          },
+        },
+      },
+      grid: {
+        borderColor: "#e5e7eb",
+        strokeDashArray: 5,
       },
     };
 
@@ -155,6 +256,36 @@ const MarketChart: React.FC<MarketChartProps> = ({ data }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
       <div ref={chartRef} />
+
+      {/* 통계 정보 */}
+      {showStats && stats && (
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-blue-50 rounded-lg p-4">
+            <div className="text-sm font-medium text-blue-600">평균 종가</div>
+            <div className="text-2xl font-bold text-blue-900">
+              {stats.avgPrice.toLocaleString()}원
+            </div>
+          </div>
+          <div className="bg-green-50 rounded-lg p-4">
+            <div className="text-sm font-medium text-green-600">최고가</div>
+            <div className="text-2xl font-bold text-green-900">
+              {stats.maxPrice.toLocaleString()}원
+            </div>
+          </div>
+          <div className="bg-red-50 rounded-lg p-4">
+            <div className="text-sm font-medium text-red-600">최저가</div>
+            <div className="text-2xl font-bold text-red-900">
+              {stats.minPrice.toLocaleString()}원
+            </div>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-4">
+            <div className="text-sm font-medium text-purple-600">총 거래량</div>
+            <div className="text-2xl font-bold text-purple-900">
+              {(stats.totalVolume / 1000).toFixed(0)}K
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

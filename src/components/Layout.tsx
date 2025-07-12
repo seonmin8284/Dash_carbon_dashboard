@@ -27,10 +27,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarTab, setSidebarTab] = useState<"chat" | null>("chat");
 
   const navItems = [
-    { path: "/", icon: Home, label: "메인 대시보드" },
+    { path: "/", icon: Home, label: "ESG 대시보드" },
     { path: "/dashboard", icon: BarChart3, label: "현황 대시보드" },
     { path: "/strategy", icon: ShoppingCart, label: "구매 전략" },
-    { path: "/chatbot", icon: MessageCircle, label: "AI 챗봇" },
+    // { path: "/chatbot", icon: MessageCircle, label: "AI 챗봇" },
     { path: "/report", icon: FileText, label: "AI 리포트 생성기" },
     { path: "/info", icon: Info, label: "프로그램 정보" },
   ];

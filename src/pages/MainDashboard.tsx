@@ -450,7 +450,7 @@ const MainDashboard: React.FC = () => {
           </div>
 
           {/* AI Simulator */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+          {/* <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4">
               AI 시뮬레이터
             </h4>
@@ -497,7 +497,7 @@ const MainDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
