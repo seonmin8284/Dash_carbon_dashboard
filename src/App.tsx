@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 const MainDashboard = lazy(() => import("./pages/MainDashboard"));
 const Chatbot = lazy(() => import("./pages/Chatbot"));
 const Strategy = lazy(() => import("./pages/Strategy"));
+const StrategyAnalysis = lazy(() => import("./pages/StrategyAnalysis"));
 const ProgramInfo = lazy(() => import("./pages/ProgramInfo"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ReportGenerator = lazy(() => import("./pages/ReportGenerator"));
@@ -33,6 +34,7 @@ const App: React.FC = () => {
             <Route path="/" element={<MainDashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/strategy" element={<Strategy />} />
+            <Route path="/strategy-analysis" element={<StrategyAnalysis />} />
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/info" element={<ProgramInfo />} />
             <Route path="/report" element={<ReportGenerator />} />

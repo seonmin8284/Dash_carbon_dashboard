@@ -47,24 +47,28 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
+      columns: 8,
     },
     {
       name: "SASB / ISSB 기준",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
+      columns: 7,
     },
     {
       name: "DJSI 기준",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200",
+      columns: 7,
     },
     {
       name: "K-ESG 기준",
       color: "text-orange-600",
       bgColor: "bg-orange-50",
       borderColor: "border-orange-200",
+      columns: 7,
     },
   ];
 
@@ -83,8 +87,7 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
       if (cardRef.current) {
         const cardWidth = cardRef.current.offsetWidth;
         // 현재 선택된 기준의 컬럼 수에 따른 최소 너비 계산
-        const currentColumns =
-          standards[currentSlide].name === "GRI 305 기준" ? 8 : 7;
+        const currentColumns = standards[currentSlide].columns;
         const tableMinWidth = currentColumns * 120 + 100; // 컬럼당 120px + 여유공간
         const companyStatsWidth = 320;
         const gap = 24;
@@ -93,12 +96,17 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
           tableMinWidth + companyStatsWidth + gap + extraSpace;
 
         // 사이드바가 열려있으면 더 엄격한 조건 적용
+        // GRI 305 기준은 더 많은 컬럼이 있으므로 더 관대한 조건 적용
         const effectiveMinWidth = isChatSidebarOpen
           ? minWidthForSideBySide + 200
-          : minWidthForSideBySide - 400; // 사이드바가 닫혀있으면 더 관대한 조건
+          : currentSlide === 0
+          ? minWidthForSideBySide - 600 // GRI 305 기준은 더 관대한 조건
+          : minWidthForSideBySide - 400; // 다른 기준들
 
         console.log("ESGRankingCard Debug:", {
           cardWidth,
+          currentSlide,
+          currentColumns,
           isChatSidebarOpen,
           effectiveMinWidth,
           isNarrow: cardWidth < effectiveMinWidth,
@@ -142,8 +150,15 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
         </p>
       </div>
 
-      {/* Carousel Controls */}
-      <div className="flex justify-between items-center mb-6">
+      {/* Standard Title with Carousel Controls */}
+      <div className="flex justify-between items-center mb-4">
+        <div
+          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${currentStandard.bgColor} ${currentStandard.borderColor} ${currentStandard.color}`}
+        >
+          {currentStandard.name}
+        </div>
+
+        {/* Carousel Controls */}
         <div className="flex items-center space-x-2">
           <button
             onClick={prevSlide}
@@ -169,13 +184,6 @@ const ESGRankingCard: React.FC<ESGRankingCardProps> = ({
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-      </div>
-
-      {/* Standard Title */}
-      <div
-        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold mb-4 ${currentStandard.bgColor} ${currentStandard.borderColor} ${currentStandard.color}`}
-      >
-        {currentStandard.name}
       </div>
 
       {/* Content */}

@@ -8,6 +8,8 @@ import {
   Info,
   Globe,
   FileText,
+  Target,
+  ChevronDown,
 } from "lucide-react";
 import ChatInterface from "./ChatInterface";
 import { ChatMessage } from "../types";
@@ -25,11 +27,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [sidebarTab, setSidebarTab] = useState<"chat" | null>("chat");
+  const [strategyDropdownOpen, setStrategyDropdownOpen] = useState(false);
 
   const navItems = [
     { path: "/", icon: Home, label: "ESG 대시보드" },
     { path: "/dashboard", icon: BarChart3, label: "현황 대시보드" },
-    { path: "/strategy", icon: ShoppingCart, label: "구매 전략" },
     // { path: "/chatbot", icon: MessageCircle, label: "AI 챗봇" },
     { path: "/report", icon: FileText, label: "AI 리포트 생성기" },
     { path: "/info", icon: Info, label: "프로그램 정보" },
@@ -57,7 +59,68 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
 
             <nav className="space-y-2">
-              {navItems.map((item) => {
+              {/* ESG 대시보드 */}
+              <Link
+                to="/"
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              >
+                <Home className="h-5 w-5" />
+                <span className="font-medium">ESG 대시보드</span>
+              </Link>
+
+              {/* 현황 대시보드 */}
+              <Link
+                to="/dashboard"
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              >
+                <BarChart3 className="h-5 w-5" />
+                <span className="font-medium">현황 대시보드</span>
+              </Link>
+
+              {/* 전략분석 드롭다운 */}
+              <div className="relative">
+                <button
+                  onMouseEnter={() => setStrategyDropdownOpen(true)}
+                  onMouseLeave={() => setStrategyDropdownOpen(false)}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Target className="h-5 w-5" />
+                    <span className="font-medium">전략 분석</span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${
+                      strategyDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {strategyDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 top-full bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                    onMouseEnter={() => setStrategyDropdownOpen(true)}
+                    onMouseLeave={() => setStrategyDropdownOpen(false)}
+                  >
+                    <Link
+                      to="/strategy"
+                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      <span className="font-medium">구매 전략</span>
+                    </Link>
+                    <Link
+                      to="/strategy-analysis"
+                      className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <Target className="h-5 w-5" />
+                      <span className="font-medium">감축 전략</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* 나머지 메뉴들 */}
+              {navItems.slice(2).map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -93,7 +156,58 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Mobile Navigation */}
           <nav className="md:hidden bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 z-50">
             <div className="flex justify-around py-2">
-              {navItems.map((item) => {
+              {/* ESG 대시보드 */}
+              <Link
+                to="/"
+                className="flex flex-col items-center py-2 px-3 text-xs text-gray-500"
+              >
+                <Home className="h-5 w-5 mb-1" />
+                <span>ESG 대시보드</span>
+              </Link>
+
+              {/* 현황 대시보드 */}
+              <Link
+                to="/dashboard"
+                className="flex flex-col items-center py-2 px-3 text-xs text-gray-500"
+              >
+                <BarChart3 className="h-5 w-5 mb-1" />
+                <span>현황 대시보드</span>
+              </Link>
+
+              {/* 모바일 전략분석 드롭다운 */}
+              <div className="relative">
+                <button
+                  onClick={() => setStrategyDropdownOpen(!strategyDropdownOpen)}
+                  className="flex flex-col items-center py-2 px-3 text-xs text-gray-500"
+                >
+                  <Target className="h-5 w-5 mb-1" />
+                  <span>전략 분석</span>
+                </button>
+
+                {strategyDropdownOpen && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
+                    <Link
+                      to="/strategy"
+                      className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 text-gray-600 text-xs"
+                      onClick={() => setStrategyDropdownOpen(false)}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      <span>구매 전략</span>
+                    </Link>
+                    <Link
+                      to="/strategy-analysis"
+                      className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 text-gray-600 text-xs"
+                      onClick={() => setStrategyDropdownOpen(false)}
+                    >
+                      <Target className="h-4 w-4" />
+                      <span>감축 전략</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* 나머지 메뉴들 */}
+              {navItems.slice(2).map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link

@@ -54,8 +54,20 @@ const MainDashboard: React.FC = () => {
       trendChartElement.innerHTML = "";
     }
 
+    // 평균 ESG 점수 계산
+    const averageESGScores = esgMultiStandardData.map((item) => {
+      const avg =
+        (item.gri.score + item.sasb.score + item.djsi.score + item.kEsg.score) /
+        4;
+      return Math.round(avg * 10) / 10;
+    });
+
     const options = {
       series: [
+        {
+          name: "평균 ESG 점수",
+          data: averageESGScores,
+        },
         {
           name: "GRI 기준",
           data: esgMultiStandardData.map((item) => item.gri.score),
@@ -80,10 +92,10 @@ const MainDashboard: React.FC = () => {
           show: false,
         },
       },
-      colors: ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"],
+      colors: ["#EF4444", "#10B981", "#3B82F6", "#F59E0B", "#8B5CF6"],
       stroke: {
         curve: "smooth",
-        width: 3,
+        width: [4, 2, 2, 2, 2],
       },
       grid: {
         borderColor: "#E5E7EB",
@@ -115,7 +127,7 @@ const MainDashboard: React.FC = () => {
         },
       },
       markers: {
-        size: 6,
+        size: [8, 4, 4, 4, 4],
         strokeColors: "#FFFFFF",
         strokeWidth: 2,
       },
@@ -150,15 +162,15 @@ const MainDashboard: React.FC = () => {
       series: [
         {
           name: "감축률",
-          data: [18.5, 22.1, 19.8, 25.3, 21.7, 23.9],
+          data: [24.8, 18.5, 22.1, 19.8, 25.3, 21.7, 23.9],
         },
         {
           name: "할당효율",
-          data: [112.3, 108.7, 115.2, 102.8, 118.5, 110.3],
+          data: [118.2, 112.3, 108.7, 115.2, 102.8, 118.5, 110.3],
         },
         {
           name: "ESG 점수",
-          data: [85.2, 88.7, 82.3, 91.5, 86.8, 89.1],
+          data: [91.5, 85.2, 88.7, 82.3, 91.5, 86.8, 89.1],
         },
       ],
       chart: {
@@ -186,6 +198,7 @@ const MainDashboard: React.FC = () => {
       },
       xaxis: {
         categories: [
+          "Wavico",
           "삼성전자",
           "POSCO",
           "LG화학",
@@ -195,7 +208,24 @@ const MainDashboard: React.FC = () => {
         ],
         labels: {
           style: {
-            colors: "#6B7280",
+            colors: [
+              "#3B82F6",
+              "#6B7280",
+              "#6B7280",
+              "#6B7280",
+              "#6B7280",
+              "#6B7280",
+              "#6B7280",
+            ],
+            fontWeight: [
+              "bold",
+              "normal",
+              "normal",
+              "normal",
+              "normal",
+              "normal",
+              "normal",
+            ],
           },
         },
       },
@@ -213,7 +243,32 @@ const MainDashboard: React.FC = () => {
         },
       },
       fill: {
-        opacity: 1,
+        opacity: [1, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+      },
+      annotations: {
+        yaxis: [
+          {
+            y: 24.8,
+            borderColor: "#3B82F6",
+            borderWidth: 1,
+            strokeDashArray: 3,
+            opacity: 0.7,
+          },
+          {
+            y: 118.2,
+            borderColor: "#3B82F6",
+            borderWidth: 1,
+            strokeDashArray: 3,
+            opacity: 0.7,
+          },
+          {
+            y: 91.5,
+            borderColor: "#3B82F6",
+            borderWidth: 1,
+            strokeDashArray: 3,
+            opacity: 0.7,
+          },
+        ],
       },
       tooltip: {
         theme: "light",
@@ -226,6 +281,141 @@ const MainDashboard: React.FC = () => {
     };
 
     const chart = new window.ApexCharts(kpiChartElement, options);
+    chart.render();
+  }, [apexChartsLoaded]);
+
+  // 업종별 ESG 랭킹 차트 렌더링
+  useEffect(() => {
+    if (!apexChartsLoaded) return;
+
+    const industryChartElement = document.getElementById("industry-esg-chart");
+    if (!industryChartElement) return;
+
+    // 기존 차트 제거
+    if (industryChartElement.innerHTML) {
+      industryChartElement.innerHTML = "";
+    }
+
+    const industryData = [
+      { industry: "전자제품", avgScore: 87.2, companies: 15, trend: "up" },
+      { industry: "철강", avgScore: 82.5, companies: 8, trend: "stable" },
+      { industry: "화학", avgScore: 79.8, companies: 12, trend: "up" },
+      { industry: "자동차", avgScore: 85.1, companies: 10, trend: "down" },
+      { industry: "건설", avgScore: 76.3, companies: 20, trend: "up" },
+      { industry: "에너지", avgScore: 88.9, companies: 6, trend: "stable" },
+      { industry: "제조업", avgScore: 81.4, companies: 25, trend: "up" },
+      { industry: "서비스업", avgScore: 83.7, companies: 18, trend: "stable" },
+    ];
+
+    const options = {
+      series: [
+        {
+          name: "평균 ESG 점수",
+          data: industryData.map((item) => item.avgScore),
+        },
+        {
+          name: "기업 수",
+          data: industryData.map((item) => item.companies),
+        },
+      ],
+      chart: {
+        type: "bar",
+        height: 350,
+        toolbar: {
+          show: false,
+        },
+      },
+      colors: ["#10B981", "#3B82F6"],
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: "60%",
+          endingShape: "rounded",
+        },
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val: number, opts: any) {
+          if (opts.seriesIndex === 0) {
+            return val.toFixed(1);
+          }
+          return val;
+        },
+        style: {
+          fontSize: "12px",
+          colors: ["#374151", "#374151"],
+        },
+      },
+      stroke: {
+        show: true,
+        width: 2,
+        colors: ["transparent"],
+      },
+      xaxis: {
+        categories: industryData.map((item) => item.industry),
+        labels: {
+          style: {
+            colors: "#6B7280",
+            fontSize: "12px",
+          },
+          rotate: -45,
+        },
+      },
+      yaxis: [
+        {
+          title: {
+            text: "ESG 점수",
+            style: {
+              color: "#6B7280",
+            },
+          },
+          labels: {
+            style: {
+              colors: "#6B7280",
+            },
+          },
+        },
+        {
+          opposite: true,
+          title: {
+            text: "기업 수",
+            style: {
+              color: "#6B7280",
+            },
+          },
+          labels: {
+            style: {
+              colors: "#6B7280",
+            },
+          },
+        },
+      ],
+      fill: {
+        opacity: 1,
+      },
+      tooltip: {
+        theme: "light",
+        y: [
+          {
+            formatter: function (value: number) {
+              return value.toFixed(1) + "점";
+            },
+          },
+          {
+            formatter: function (value: number) {
+              return value + "개사";
+            },
+          },
+        ],
+      },
+      legend: {
+        position: "top",
+        horizontalAlign: "left",
+        fontSize: "14px",
+      },
+    };
+
+    const chart = new window.ApexCharts(industryChartElement, options);
     chart.render();
   }, [apexChartsLoaded]);
 
@@ -322,22 +512,57 @@ const MainDashboard: React.FC = () => {
     return <div id="kpi-chart" className="w-full" />;
   };
 
+  const createIndustryESGChart = () => {
+    if (!apexChartsLoaded)
+      return (
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          차트 로딩 중...
+        </div>
+      );
+    return <div id="industry-esg-chart" className="w-full" />;
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            통합 탄소배출권 관리 플랫폼
-          </h2>
-          <p className="text-gray-700 mb-3 leading-relaxed">
-            탄소배출량 모니터링부터 구매 전략 수립까지, 모든 것을 한 곳에서
-            관리하세요.
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-8 shadow-sm">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+              <span className="text-white font-bold text-lg">W</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              <span className="text-blue-600">Wavico</span> 탄소배출권 관리
+              대시보드
+            </h2>
+          </div>
+          <p className="text-gray-700 mb-4 leading-relaxed text-lg">
+            <span className="font-semibold text-blue-600">Wavico</span>의 ESG
+            우수성을 바탕으로 한
+            <span className="font-semibold">
+              {" "}
+              실시간 탄소배출권 관리 및 전략적 의사결정
+            </span>
+            을 지원합니다.
           </p>
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <div className="text-sm text-gray-600">현재 ESG 점수</div>
+              <div className="text-xl font-bold text-blue-600">91.5점</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <div className="text-sm text-gray-600">탄소 감축률</div>
+              <div className="text-xl font-bold text-green-600">24.8%</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <div className="text-sm text-gray-600">할당 효율성</div>
+              <div className="text-xl font-bold text-purple-600">118.2%</div>
+            </div>
+          </div> */}
           <p className="text-gray-600 text-sm leading-relaxed">
-            이 시스템은 기업의 탄소배출권 관리를 위한 종합 솔루션을 제공합니다.
-            실시간 데이터 기반 분석과 AI 기반 전략 추천으로 최적의 의사결정을
-            지원합니다.
+            AI 기반 예측 분석과 실시간 모니터링으로{" "}
+            <span className="font-semibold">Wavico</span>의 지속가능한 성장을
+            위한 최적의 탄소배출권 전략을 제시합니다.
           </p>
         </div>
       </div>
@@ -384,6 +609,35 @@ const MainDashboard: React.FC = () => {
             currentCompany={companyName}
             isChatSidebarOpen={isChatSidebarOpen}
           />
+
+          {/* Trend Charts */}
+          <div className="mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 업종별 ESG 랭킹 차트 */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
+                  업종별 ESG 랭킹 & 통계
+                </h4>
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  {createIndustryESGChart()}
+                </div>
+              </div>
+
+              {/* ESG 등급 추세 차트 */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4 mt-6">
+                  <span className="text-blue-600">Wavico</span>
+                  <span className="text-gray-900">
+                    {" "}
+                    ESG 등급 추세 (4가지 기준)
+                  </span>
+                </h4>
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  {createTrendChart()}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* KPI Comparison */}
           <div className="mb-6">
@@ -436,16 +690,6 @@ const MainDashboard: React.FC = () => {
           <div className="mb-6">
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               {createKPIChart()}
-            </div>
-          </div>
-
-          {/* Trend Chart */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4 mt-6">
-              ESG 등급 추세 (4가지 기준)
-            </h4>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              {createTrendChart()}
             </div>
           </div>
 
