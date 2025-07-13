@@ -114,7 +114,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
-      <div className="h-[calc(100vh-200px)] overflow-y-auto overflow-x-hidden p-4 space-y-4">
+      <div className="h-[calc(100vh-400px)] overflow-y-auto overflow-x-hidden p-4 space-y-4">
         {chatMessages.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -150,6 +150,31 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       <div className="border-t border-gray-200 p-4 mt-auto">
+        {/* 예시 질문들 */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-500 mb-2 font-medium">
+            💡 예시 질문:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              "총배출량의 연도별 변화 추이는?",
+              "🏭 에너지 산업과 수송 산업의 배출량 비교",
+              "📊 2017년과 2021년의 배출량 차이는?",
+              "🔍 가장 많이 배출하는 분야는?",
+              "📉 감축률이 가장 높은 연도는?",
+              "🌍 전체 데이터에서 평균 배출량은?",
+            ].map((question, index) => (
+              <button
+                key={index}
+                onClick={() => setChatInput(question)}
+                className="px-3 py-1 text-xs bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="flex space-x-2 min-w-0">
           <input
             type="text"
