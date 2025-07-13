@@ -14,7 +14,7 @@ import {
   ShoppingCart,
   LineChart,
 } from "lucide-react";
-import StrategySettings from "../components/StrategySettings";
+import Backtesting from "../components/Backtesting";
 import TimingChart from "../components/TimingChart";
 import ROIChart from "../components/ROIChart";
 import MarketChart from "../components/MarketChart";
@@ -28,12 +28,6 @@ import {
 
 const Strategy: React.FC = () => {
   const { marketData, loading } = useData();
-  const [companySize, setCompanySize] = useState("대기업");
-  const [annualEmission, setAnnualEmission] = useState(50000);
-  const [currentAllocation, setCurrentAllocation] = useState(40000);
-  const [budget, setBudget] = useState(100);
-  const [riskTolerance, setRiskTolerance] = useState("중립적");
-  const [analysisPeriod, setAnalysisPeriod] = useState("1년");
   const [apexChartsLoaded, setApexChartsLoaded] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(0);
 
@@ -94,22 +88,6 @@ const Strategy: React.FC = () => {
         </div>
 
         <div className="p-6">
-          {/* Strategy Settings */}
-          <StrategySettings
-            companySize={companySize}
-            setCompanySize={setCompanySize}
-            annualEmission={annualEmission}
-            setAnnualEmission={setAnnualEmission}
-            currentAllocation={currentAllocation}
-            setCurrentAllocation={setCurrentAllocation}
-            budget={budget}
-            setBudget={setBudget}
-            riskTolerance={riskTolerance}
-            setRiskTolerance={setRiskTolerance}
-            analysisPeriod={analysisPeriod}
-            setAnalysisPeriod={setAnalysisPeriod}
-          />
-
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
@@ -335,21 +313,17 @@ const Strategy: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-4">
-            <button className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Mail className="h-5 w-5 mr-2" />
-              전략 리포트 다운로드
-            </button>
-            <button className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-              <RefreshCw className="h-5 w-5 mr-2" />
-              전략 재계산
-            </button>
-            <button className="flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-              <Bell className="h-5 w-5 mr-2" />
-              알림 설정
-            </button>
-          </div>
+          {/* Backtesting */}
+          <Backtesting
+            companySize="대기업"
+            annualEmission={50000}
+            currentAllocation={40000}
+            budget={100}
+            riskTolerance="중립적"
+            analysisPeriod="1년"
+            marketData={marketData}
+            loading={loading}
+          />
         </div>
       </div>
     </div>
